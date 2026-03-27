@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书投放链接生成器 🦞</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #fe2c55;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #fe2c55;
+        }
+        button {
+            background-color: #fe2c55;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #e0244b;
+        }
+        .result-group {
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 16px;
+        }
+        .result-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .result-label span {
+            font-weight: 600;
+            color: #333;
+        }
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            width: auto;
+        }
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            min-height: 80px;
+            resize: vertical;
+            word-break: break-all;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .tab-btn.active {
+            background-color: #fe2c55;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>小红书投放链接生成器 🦞</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('single')">单个生成</button>
+        <button class="tab-btn" onclick="switchTab('batch')">批量生成</button>
+    </div>
+    
+    <!-- 单个生成 -->
+    <div class="card tab-content" id="singleTab">
+        <div class="form-group">
+            <label for="appLink">投放链接（APP链接）</label>
+            <input type="text" id="appLink" placeholder="例如：https://mp.elong.com/tenthousandaura/?activitycode=xxx" value="https://mp.elong.com/tenthousandaura/?activitycode=7d11cd76-3678-4d3f-a001-c2431031fc7c&if=5017380&of=5079371">
+        </div>
+        <div class="form-group">
+            <label for="refid">Refid</label>
+            <input type="text" id="refid" placeholder="例如：123456" value="123456">
+        </div>
+        <div class="form-group">
+            <label for="noteid">笔记ID</label>
+            <input type="text" id="noteid" placeholder="例如：6123456789">
+        </div>
+        <button onclick="generateLinks()">生成链接</button>
+    </div>
+
+    <!-- 批量生成 -->
+    <div class="card tab-content" id="batchTab" style="display: none;">
+        <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label>上传文件（支持 .txt 或 .csv，必须是「笔记ID,投放链接,refid」格式）</label>
+                <button class="copy-btn" style="background: #FF9800; width:auto;" onclick="downloadTemplate()">下载CSV模板</button>
+            </div>
+            <input type="file" id="batchFile" accept=".txt,.csv">
+        </div>
+        <button onclick="generateBatchLinks()">批量生成</button>
+
+        <div class="result-item" id="batchResult" style="display: none; margin-top: 20px;">
+            <div class="result-label">
+                <span>批量生成结果（CSV格式）</span>
+                <button class="copy-btn" onclick="copyToClipboard('batchResultText')">复制全部</button>
+                <button class="copy-btn" style="margin-left: 8px; background-color: #2196F3;" onclick="downloadBatchCsv()">下载CSV</button>
+            </div>
+            <textarea id="batchResultText" readonly style="min-height: 250px;"></textarea>
+        </div>
+    </div>
+
+    <!-- 单个结果 -->
+    <div class="card" id="resultCard" style="display: none;">
+        <h3 style="margin-bottom: 16px; color: #333;">生成结果</h3>
+        
+        <div class="result-item">
+            <div class="result-label">
+                <span>DP (Deeplink) 链接</span>
+                <button class="copy-btn" onclick="copyToClipboard('dpResult')">复制</button>
+            </div>
+            <textarea id="dpResult" readonly></textarea>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>Universal Link</span>
+                <button class="copy-btn" onclick="copyToClipboard('ulResult')">复制</button>
+            </div>
+            <textarea id="ulResult" readonly></textarea>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>兜底链接</span>
+                <button class="copy-btn" onclick="copyToClipboard('fallbackResult')">复制</button>
+            </div>
+            <textarea id="fallbackResult" readonly></textarea>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>监测链接</span>
+                <button class="copy-btn" onclick="copyToClipboard('trackResult')">复制</button>
+            </div>
+            <textarea id="trackResult" readonly></textarea>
+        </div>
+    </div>
+
+    <div class="footer">
+        由龙虾哥 🦞 倾情制作，用完直接点复制就可以用啦
+    </div>
+
+    <script>
+        // 固定配置
+        const config = {
+            dpPrefix: 'tctclient://web/main?url=',
+            ulPrefix: 'https://m.17u.cn/app/links/web/main?url=',
+            commonParams: '&btn_from=xhs&clickid=CLICK_ID&backXHS=XHS_BACK_URL&noteid=XHS_NOTE_ID&oaidmd5=OAID_MD5&caid=CAID&idfa=IDFA&ts=TS&creativeid=CREATIVITY_ID&unitid=UNIT_ID&campaignid=CAMPAIGN_ID&wakeRefid=',
+            fallbackParams: '&wakeDM=xhs&wakeRefid=',
+            trackBase: 'http://appnew.ly.com/addap/attribution?aaid=53&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&wakeRefid='
+        };
+
+        function switchTab(tab) {
+            // 切换标签样式
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            
+            if (tab === 'single') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('singleTab').style.display = 'block';
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('batchTab').style.display = 'block';
+            }
+        }
+
+        function generateLinks() {
+            let appLink = document.getElementById('appLink').value;
+            let refid = document.getElementById('refid').value;
+            const noteid = document.getElementById('noteid').value.trim();
+
+            // 检查前后空格
+            if (appLink !== appLink.trim() || refid !== refid.trim()) {
+                alert('投放链接或Refid前后带有空格，请去除后重试哦！');
+                return;
+            }
+
+            appLink = appLink.trim();
+            refid = refid.trim();
+
+            if (!appLink || !refid) {
+                alert('请填写完整的投放链接和refid哦！');
+                return;
+            }
+
+            const encodedAppLink = encodeURIComponent(appLink);
+
+            // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
+            let dpCommonParams = config.commonParams
+                .replace(/CLICK_ID/g, '__CLICK_ID__')
+                .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                .replace(/OAID_MD5/g, '__OAID_MD5__')
+                .replace(/CAID/g, '__CAID__')
+                .replace(/IDFA/g, '__IDFA__')
+                .replace(/TS/g, '__TS__')
+                .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                .replace(/UNIT_ID/g, '__UNIT_ID__')
+                .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+            let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
+            
+            // Universal-link：所有参数都用下划线占位符
+            let ulCommonParams = config.commonParams
+                .replace(/CLICK_ID/g, '__CLICK_ID__')
+                .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                .replace(/OAID_MD5/g, '__OAID_MD5__')
+                .replace(/CAID/g, '__CAID__')
+                .replace(/IDFA/g, '__IDFA__')
+                .replace(/TS/g, '__TS__')
+                .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                .replace(/UNIT_ID/g, '__UNIT_ID__')
+                .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+            let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
+            const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
+            let trackLink = config.trackBase + refid;
+
+            // 填充结果
+            document.getElementById('dpResult').value = dpLink;
+            document.getElementById('ulResult').value = ulLink;
+            document.getElementById('fallbackResult').value = fallbackLink;
+            document.getElementById('trackResult').value = trackLink;
+
+            // 显示结果区域
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateBatchLinks() {
+            const fileInput = document.getElementById('batchFile');
+
+            if (fileInput.files.length > 0) {
+                // 处理文件上传
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    processBatchInput(e.target.result);
+                };
+                reader.readAsText(fileInput.files[0]);
+            } else {
+                alert('请先上传文件哦！可以先点击下载CSV模板，填好再上传~');
+            }
+        }
+
+        function processBatchInput(inputText) {
+            const lines = inputText.split(/\r?\n/).filter(line => line.trim());
+            const results = [];
+            results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                // 拆分：用空格或制表符分隔，匹配第一个空格（因为URL里可能有参数&不会有空格）
+                const splitIndex = line.search(/\s+/);
+                if (splitIndex === -1) {
+                    alert(`第 ${i+1} 行格式不对哦，需要是「APP链接 refid」用空格分隔`);
+                    return;
+                }
+                    // 支持三个字段：笔记ID 投放链接 refid
+                const parts = line.split(/\s+/).filter(p => p);
+                let noteId, appLink, refid;
+                
+                if (parts.length === 3) {
+                    noteId = parts[0].trim();
+                    appLink = parts[1].trim();
+                    refid = parts[2].trim();
+                } else if (parts.length === 2) {
+                    // 兼容旧格式
+                    appLink = parts[0].trim();
+                    refid = parts[1].trim();
+                    noteId = '';
+                } else {
+                    alert(`第 ${i+1} 行格式不对哦，需要是「笔记ID 投放链接 refid」三个字段，用空格分开`);
+                    return;
+                }
+
+                // 检查前后空格
+                if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
+                    alert(`第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
+                    return;
+                }
+
+                if (!appLink || !refid) {
+                    alert(`第 ${i+1} 行内容不完整`);
+                    return;
+                }
+
+                const encodedAppLink = encodeURIComponent(appLink);
+                // DP链接：所有参数用下划线占位符，只替换笔记ID为实际填写
+                // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
+                let dpCommonParams = config.commonParams
+                    .replace(/CLICK_ID/g, '__CLICK_ID__')
+                    .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                    .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                    .replace(/OAID_MD5/g, '__OAID_MD5__')
+                    .replace(/CAID/g, '__CAID__')
+                    .replace(/IDFA/g, '__IDFA__')
+                    .replace(/TS/g, '__TS__')
+                    .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                    .replace(/UNIT_ID/g, '__UNIT_ID__')
+                    .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+                let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
+                // Universal-link：所有参数都用下划线占位符
+                let ulCommonParams = config.commonParams
+                    .replace(/CLICK_ID/g, '__CLICK_ID__')
+                    .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                    .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                    .replace(/OAID_MD5/g, '__OAID_MD5__')
+                    .replace(/CAID/g, '__CAID__')
+                    .replace(/IDFA/g, '__IDFA__')
+                    .replace(/TS/g, '__TS__')
+                    .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                    .replace(/UNIT_ID/g, '__UNIT_ID__')
+                    .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+                let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
+                const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
+                let trackLink = config.trackBase + refid;
+
+
+                // CSV转义：包含逗号或引号的话加引号包裹
+                const escapeCsv = (str) => {
+                    if (str.includes(',') || str.includes('"')) {
+                        return '"' + str.replace(/"/g, '""') + '"';
+                    }
+                    return str;
+                };
+
+                results.push([
+                    escapeCsv(noteId || ''),
+                    escapeCsv(appLink),
+                    escapeCsv(refid),
+                    escapeCsv(dpLink),
+                    escapeCsv(ulLink),
+                    escapeCsv(fallbackLink),
+                    escapeCsv(trackLink)
+                ].join(','));
+            }
+
+            const resultText = results.join('\n');
+            document.getElementById('batchResultText').value = resultText;
+            document.getElementById('batchResult').style.display = 'block';
+            document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
+            window.batchResults = resultText; // 保存供下载
+        }
+
+        function downloadBatchCsv() {
+            if (!window.batchResults) return;
+            const blob = new Blob([window.batchResults], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'xhs-links-' + new Date().getTime() + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 下载CSV模板
+        function downloadTemplate() {
+            const templateContent = '笔记ID,投放链接,refid\n6123456789,https://mp.elong.com/tenthousandaura/?activitycode=xxx,123456\n6987654321,https://mp.elong.com/another-activity/,789012\n';
+            const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'xhs-link-template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 处理CSV文件读取，处理逗号分隔
+        const originalProcessBatchInput = processBatchInput;
+        function processBatchInput(inputText) {
+            // 判断是不是CSV逗号分隔格式
+            const firstLine = inputText.split(/\r?\n/)[0];
+            if (firstLine.includes(',')) {
+                // CSV格式，逐行解析
+                const lines = inputText.split(/\r?\n/).filter(line => line.trim());
+                const results = [];
+                results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
+                
+                // 跳过表头（如果表头是第一行）
+                const startLine = lines[0].includes('笔记ID') || lines[0].includes('noteid') ? 1 : 0;
+
+                for (let i = startLine; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // 处理CSV格式：支持带引号的字段
+                    let parts = [];
+                    let inQuote = false;
+                    let current = '';
+                    for (let c of line) {
+                        if (c === '"') {
+                            inQuote = !inQuote;
+                        } else if (c === ',' && !inQuote) {
+                            parts.push(current);
+                            current = '';
+                        } else {
+                            current += c;
+                        }
+                    }
+                    parts.push(current);
+                    parts = parts.map(p => p.trim());
+
+                    if (parts.length < 3) {
+                        alert(`CSV第 ${i+1} 行格式不对哦，需要「笔记ID,投放链接,refid」三个字段`);
+                        return;
+                    }
+
+                    const noteId = parts[0].trim();
+                    const appLink = parts[1].trim();
+                    const refid = parts[2].trim();
+
+                    // 检查前后空格
+                    if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
+                        alert(`CSV第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
+                        return;
+                    }
+
+                    if (!appLink || !refid) {
+                        alert(`CSV第 ${i+1} 行内容不完整`);
+                        return;
+                    }
+
+                    const encodedAppLink = encodeURIComponent(appLink);
+                    // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
+                    let dpCommonParams = config.commonParams
+                        .replace(/CLICK_ID/g, '__CLICK_ID__')
+                        .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                        .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                        .replace(/OAID_MD5/g, '__OAID_MD5__')
+                        .replace(/CAID/g, '__CAID__')
+                        .replace(/IDFA/g, '__IDFA__')
+                        .replace(/TS/g, '__TS__')
+                        .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                        .replace(/UNIT_ID/g, '__UNIT_ID__')
+                        .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+                    let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
+                    // Universal-link：所有参数都用下划线占位符
+                    let ulCommonParams = config.commonParams
+                        .replace(/CLICK_ID/g, '__CLICK_ID__')
+                        .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
+                        .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
+                        .replace(/OAID_MD5/g, '__OAID_MD5__')
+                        .replace(/CAID/g, '__CAID__')
+                        .replace(/IDFA/g, '__IDFA__')
+                        .replace(/TS/g, '__TS__')
+                        .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
+                        .replace(/UNIT_ID/g, '__UNIT_ID__')
+                        .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
+                    let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
+                    const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
+                    let trackLink = config.trackBase + refid;
+
+                    // CSV转义
+                    const escapeCsv = (str) => {
+                        if (str.includes(',') || str.includes('"')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    };
+
+                    results.push([
+                        escapeCsv(noteId || ''),
+                        escapeCsv(appLink),
+                        escapeCsv(refid),
+                        escapeCsv(dpLink),
+                        escapeCsv(ulLink),
+                        escapeCsv(fallbackLink),
+                        escapeCsv(trackLink)
+                    ].join(','));
+                }
+
+                const resultText = results.join('\n');
+                document.getElementById('batchResultText').value = resultText;
+                document.getElementById('batchResult').style.display = 'block';
+                document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
+                window.batchResults = resultText;
+            } else {
+                // 原格式空格分隔处理
+                const lines = inputText.split(/\r?\n/).filter(line => line.trim());
+                const results = [];
+                results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    const parts = line.split(/\s+/).filter(p => p);
+                    let noteId, appLink, refid;
+                    
+                    if (parts.length === 3) {
+                        noteId = parts[0].trim();
+                        appLink = parts[1].trim();
+                        refid = parts[2].trim();
+                    } else if (parts.length === 2) {
+                        appLink = parts[0].trim();
+                        refid = parts[1].trim();
+                        noteId = '';
+                    } else {
+                        alert(`第 ${i+1} 行格式不对哦，需要是「笔记ID 投放链接 refid」三个字段，用空格分开`);
+                        return;
+                    }
+
+                    if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
+                        alert(`第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
+                        return;
+                    }
+
+                    if (!appLink || !refid) {
+                        alert(`第 ${i+1} 行内容不完整`);
+                        return;
+                    }
+
+                    const encodedAppLink = encodeURIComponent(appLink);
+                    let dpLink = config.dpPrefix + encodedAppLink + config.commonParams + refid;
+                    let ulLink = config.ulPrefix + encodedAppLink + config.commonParams.replace(/CLICK_ID/g, '__CLICK_ID__').replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__').replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__').replace(/OAID_MD5/g, '__OAID_MD5__').replace(/CAID/g, '__CAID__').replace(/IDFA/g, '__IDFA__').replace(/TS/g, '__TS__').replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__').replace(/UNIT_ID/g, '__UNIT_ID__').replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__') + refid;
+                    const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
+                    let trackLink = config.trackBase + refid;
+
+                    if (noteId) {
+                        trackLink = trackLink.replace(/__NOTE_ID__&/, noteId + '&');
+                    }
+
+                    const escapeCsv = (str) => {
+                        if (str.includes(',') || str.includes('"')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    };
+
+                    results.push([
+                        escapeCsv(noteId || ''),
+                        escapeCsv(appLink),
+                        escapeCsv(refid),
+                        escapeCsv(dpLink),
+                        escapeCsv(ulLink),
+                        escapeCsv(fallbackLink),
+                        escapeCsv(trackLink)
+                    ].join(','));
+                }
+
+                const resultText = results.join('\n');
+                document.getElementById('batchResultText').value = resultText;
+                document.getElementById('batchResult').style.display = 'block';
+                document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
+                window.batchResults = resultText;
+            }
+        }
+
+        // 处理文件上传变化
+        document.getElementById('batchFile').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                const label = e.target.previousElementSibling.querySelector('label');
+                console.log(e.target);
+                e.target.previousElementSibling.querySelector('label').textContent = `已选择文件：${fileName}`;
+            }
+        });
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            
+            const btn = element.previousElementSibling.querySelector('.copy-btn');
+            const originalText = btn.textContent;
+            btn.textContent = '已复制!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1500);
+        }
+
+        // 回车触发生成
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateLinks();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
