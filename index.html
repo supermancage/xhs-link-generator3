@@ -1,662 +1,442 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小红书投放链接生成器 🦞</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 0 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #fe2c55;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #fe2c55;
-        }
-        button {
-            background-color: #fe2c55;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 600;
-        }
-        button:hover {
-            background-color: #e0244b;
-        }
-        .result-group {
-            margin-top: 20px;
-        }
-        .result-item {
-            margin-bottom: 16px;
-        }
-        .result-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .result-label span {
-            font-weight: 600;
-            color: #333;
-        }
-        .copy-btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            width: auto;
-        }
-        .copy-btn:hover {
-            background-color: #45a049;
-        }
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 12px;
-            min-height: 80px;
-            resize: vertical;
-            word-break: break-all;
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            background: white;
-            border-radius: 12px;
-            padding: 6px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: transparent;
-            color: #666;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .tab-btn.active {
-            background-color: #fe2c55;
-            color: white;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #999;
-            font-size: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书投放链接生成器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>:root{--bg:#0f0f0f;--card:#212121;--input:#141414;--border:#2e2e2e;--accent:#FE2C55;--accent-d:rgba(254,44,85,.12);--text:#f0f0f0;--muted:#888;--dim:#555;--link:#a8d8ff;--green:#00d68f;--green-d:rgba(0,214,143,.12);--amber:#ffaa00;--amber-d:rgba(255,170,0,.12);--cyan:#7ec8e3;--cyan-d:rgba(126,200,227,.12);--r:14px;--r-sm:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 16px 80px;background-image:radial-gradient(ellipse 90% 50% at 50% -10%,rgba(254,44,85,.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 110%,rgba(0,214,143,.04) 0%,transparent 50%)}
+.c{max-width:820px;margin:0 auto}.hdr{text-align:center;padding:52px 0 40px}
+.logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px}
+.logo-i{width:44px;height:44px;background:var(--accent-d);border:1px solid rgba(254,44,85,.25);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.badge{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-d);padding:4px 12px;border-radius:20px;border:1px solid rgba(254,44,85,.2)}
+h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}h1 .a{color:var(--accent)}
+.sub{color:var(--muted);font-size:14px;font-weight:300}
+.dv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 0 28px}
+.st{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:16px;padding:0 4px;display:flex;align-items:center;gap:8px}
+.st::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px}
+.st.g::before{background:var(--green)}.st.a::before{background:var(--amber)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--input);border-radius:var(--r-sm);padding:4px}
+.tab{flex:1;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;text-align:center;font-family:'Noto Sans SC',sans-serif}
+.tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.3)}
+.tc{display:none}.tc.on{display:block}
+.fg{grid-template-columns:1fr 1fr;gap:16px;display:grid}
+@media(max-width:560px){.fg{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:7px}.f.g{grid-column:1/-1}
+.f label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px}
+.f label .t{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--accent-d);color:var(--accent);font-weight:700}
+.f input{background:var(--input);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text);transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
+.f input::placeholder{color:var(--dim);font-family:'Noto Sans SC',sans-serif;font-size:12.5px}
+.f input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-d)}
+.uz{border:2px dashed var(--border);border-radius:var(--r);padding:48px 24px;text-align:center;cursor:pointer;transition:all .25s;position:relative}
+.uz:hover,.uz.dragover{border-color:var(--accent);background:var(--accent-d)}
+.uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-i{font-size:36px;margin-bottom:12px}
+.uz h3{font-size:15px;font-weight:600;margin-bottom:6px}.uz p{font-size:12px;color:var(--muted)}.uz p span{color:var(--accent);font-weight:600}
+.th{font-size:12px;color:var(--dim);margin-top:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.th a{color:var(--accent);text-decoration:none;cursor:pointer}.th a:hover{text-decoration:underline}
+.sb{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.st2{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--input);border:1px solid var(--border);border-radius:8px;font-size:12px}
+.st2 .n{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}.st2 .l{color:var(--muted)}
+.st2.ok .n{color:var(--green)}.st2.er .n{color:var(--accent)}.st2.tot .n{color:var(--text)}
+.tw{overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead{background:rgba(255,255,255,.03)}
+th{padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.02)}
+td.url{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--link)}
+td .rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 4px;border-radius:4px;transition:color .2s}
+td .rm:hover{color:var(--accent)}
+.rs{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;display:inline-block}
+.rs.ok{background:var(--green-d);color:var(--green)}.rs.er{background:var(--accent-d);color:var(--accent)}.rs.pen{background:rgba(255,255,255,.06);color:var(--dim)}
+.rhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px}
+.rlbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:8px}
+.rlbl::before{content:'';width:3px;height:12px;background:var(--green);border-radius:2px}.rmeta{font-size:11px;color:var(--dim)}
+.lc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;transition:border-color .25s}
+.lc:hover{border-color:#444}.lc.dp:hover{border-color:rgba(254,44,85,.35)}.lc.ul:hover{border-color:rgba(0,214,143,.35)}.lc.fb:hover{border-color:rgba(255,170,0,.35)}.lc.mn:hover{border-color:rgba(168,216,255,.35)}
+.lc-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.015);cursor:pointer;user-select:none}
+.lc-left{display:flex;align-items:center;gap:12px}
+.lc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.dp .lc-icon{background:var(--accent-d);color:var(--accent)}.ul .lc-icon{background:var(--green-d);color:var(--green)}.fb .lc-icon{background:var(--amber-d);color:var(--amber)}.mn .lc-icon{background:var(--cyan-d);color:var(--cyan)}
+.lc-t{font-size:13.5px;font-weight:600;margin-bottom:2px}.lc-s{font-size:11px;color:var(--dim)}
+.lc-tag{font-size:10.5px;padding:3px 9px;border-radius:5px;font-weight:600}
+.dp .lc-tag{background:var(--accent-d);color:var(--accent)}.ul .lc-tag{background:var(--green-d);color:var(--green)}.fb .lc-tag{background:var(--amber-d);color:var(--amber)}.mn .lc-tag{background:var(--cyan-d);color:var(--cyan)}
+.lc-body{padding:14px 18px}
+.lu{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);line-height:1.7;word-break:break-all;max-height:0;overflow:hidden;opacity:0;transition:max-height .3s,opacity .25s,padding .3s}
+.lu.on{max-height:400px;opacity:1;padding-top:2px}.lu-text{color:var(--link);word-break:break-all}
+.la{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-sm);font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Noto Sans SC',sans-serif;white-space:nowrap}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#e02548;box-shadow:0 2px 16px rgba(254,44,85,.3)}
+.btn-g{background:var(--green);color:#000}.btn-g:hover{background:#00bb7a}
+.btn-cpy{background:var(--accent-d);color:var(--accent);border:1px solid rgba(254,44,85,.2)}.btn-cpy:hover{background:rgba(254,44,85,.22)}.btn-cpy.done{background:var(--green-d);color:var(--green);border-color:rgba(0,214,143,.25)}
+.btn-gh{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border)}.btn-gh:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.es{text-align:center;padding:48px 24px;color:var(--dim)}.es-i{font-size:40px;margin-bottom:14px;opacity:.4}.es p{font-size:13px;line-height:1.6}
+.ms{margin-top:40px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ms-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}.ms-hdr h3{font-size:13px;font-weight:600;color:var(--muted)}
+.ms-body{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:560px){.ms-body{grid-template-columns:1fr}}
+.mi{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--input);border-radius:6px;border:1px solid var(--border)}
+.mi code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);white-space:nowrap}.mi span{font-size:11.5px;color:var(--muted)}
+.ds{margin-top:40px}
+.dc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.dc-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}.dc-hdr h3{font-size:15px;font-weight:600}.dc-hdr p{font-size:12px;color:var(--muted);margin-top:3px}
+.dc-body{padding:20px 22px}
+.do{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:640px){.do{grid-template-columns:1fr}}
+.do-op{padding:16px;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s}
+.do-op:hover{border-color:rgba(254,44,85,.4);background:rgba(254,44,85,.05)}.do-op.sel{border-color:var(--accent);background:var(--accent-d)}
+.do-op .n{font-size:13.5px;font-weight:600;margin-bottom:5px}.do-op .d{font-size:11.5px;color:var(--muted);line-height:1.6}
+.do-op .tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--green-d);color:var(--green);margin-top:8px;font-weight:600}
+.do-op .tag.or{background:var(--amber-d);color:var(--amber)}
+.dst{background:var(--input);border-radius:var(--r-sm);padding:18px 20px;border:1px solid var(--border)}
+.dstep{display:flex;gap:12px;margin-bottom:14px;font-size:13px}.dstep:last-child{margin-bottom:0}
+.sn{width:22px;height:22px;background:var(--accent-d);color:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.stx{color:var(--muted);line-height:1.7;padding-top:1px}.stx code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--link);background:rgba(168,216,255,.1);padding:1px 5px;border-radius:3px}.stx strong{color:var(--text)}.stx a{color:var(--link)}
+.sec{margin-top:16px;padding:12px 16px;background:rgba(255,170,0,.07);border:1px solid rgba(255,170,0,.2);border-radius:8px;font-size:12px;color:var(--amber);display:flex;align-items:flex-start;gap:8px;line-height:1.6}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--green);color:var(--green);padding:10px 22px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.er{border-color:var(--accent);color:var(--accent)}
+@keyframes su{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.lc,.bi{animation:su .35s ease both}
+.bi:nth-child(1){animation-delay:.05s}.bi:nth-child(2){animation-delay:.08s}.bi:nth-child(3){animation-delay:.11s}.bi:nth-child(4){animation-delay:.14s}
+.bi-hdr{padding:12px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.bi-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bi-n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim)}
+.bi-note{background:var(--accent-d);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.bi-ref{color:var(--dim);font-size:11px;font-family:'JetBrains Mono',monospace}
+.bi-body{display:grid;grid-template-columns:1fr 1fr;background:var(--border);gap:1px}
+@media(max-width:560px){.bi-body{grid-template-columns:1fr}}
+.mc{padding:12px 16px;display:flex;flex-direction:column;gap:5px}
+.mc-l{font-size:10.5px;font-weight:600;color:var(--dim);letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.mc-l .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dp .dot{background:var(--accent)}.ul .dot{background:var(--green)}.fb .dot{background:var(--amber)}.mn .dot{background:var(--cyan)}
+.mc-url{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--link);word-break:break-all;line-height:1.6;display:block}
+</style>
 </head>
 <body>
-    <h1>小红书投放链接生成器 🦞</h1>
-    
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('single')">单个生成</button>
-        <button class="tab-btn" onclick="switchTab('batch')">批量生成</button>
+<div class="c">
+  <header class="hdr"><div class="logo"><div class="logo-i">&#128279;</div><span class="badge">XHS 投放工具</span></div><h1>小红书投放链接<span class="a">生成器</span></h1><p class="sub">填写 App 链接和 RefID，自动生成四种渠道追踪链接</p></header>
+  <div class="dv"></div>
+  <div class="tabs"><button class="tab active" onclick="switchTab('single',this)">&#128221; 单条生成</button><button class="tab" onclick="switchTab('batch',this)">&#128230; 批量上传</button></div>
+  <div id="tab-single" class="tc on">
+    <div class="card"><div class="st">输入参数</div><div class="fg">
+      <div class="f g"><label>App 链接 <span class="t">必填</span></label><input type="url" id="appUrl" placeholder="https://mp.elong.com/tenthousandaura/?activitycode=7d11cd76-3678-4d3f-a001-c2431031fc7c"/></div>
+      <div class="f"><label>RefID <span class="t">必填</span></label><input type="text" id="refId" placeholder="123456"/></div>
+      <div class="f"><label>备注（可选）</label><input type="text" id="note" placeholder="如：618大促-北京人群包"/></div>
+    </div></div>
+    <div class="rhdr"><span class="rlbl">生成的链接</span><span class="rmeta" id="resultsMeta"></span></div>
+    <div id="results-single"><div class="es"><div class="es-i">&#128203;</div><p>填写上方 App 链接和 RefID<br/>链接将自动生成于此</p></div></div>
+  </div>
+  <div id="tab-batch" class="tc">
+    <div class="card"><div class="st a">上传数据文件</div>
+      <div class="uz" id="uploadZone"><input type="file" id="fileInput" accept=".csv,.txt,.xlsx,.xls"/><div class="upload-i">&#128194;</div><h3>点击或拖拽上传文件</h3><p>支持 <span>CSV</span> / <span>TXT</span> 格式</p><p style="margin-top:4px;font-size:11px;">表头需包含：<span>appUrl</span>、<span>refId</span>（<span>note</span> 可选）</p></div>
+      <div class="th"><span>&#128196;</span><span>没有文件？</span><a onclick="downloadTemplate()">下载 CSV 模板</a><span style="color:var(--dim)"> · </span><a onclick="switchTab('single');setTimeout(function(){document.getElementById('appUrl').focus()},100)">手动添加</a></div>
     </div>
-    
-    <!-- 单个生成 -->
-    <div class="card tab-content" id="singleTab">
-        <div class="form-group">
-            <label for="appLink">投放链接（APP链接）</label>
-            <input type="text" id="appLink" placeholder="例如：https://mp.elong.com/tenthousandaura/?activitycode=xxx" value="https://mp.elong.com/tenthousandaura/?activitycode=7d11cd76-3678-4d3f-a001-c2431031fc7c&if=5017380&of=5079371">
+    <div id="batchPreview" style="display:none">
+      <div class="rhdr"><span class="rlbl">数据预览</span><span class="rmeta" id="batchMeta"></span></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:14px 18px 0">
+          <div class="sb"><div class="st2 ok"><span class="n" id="statOk">0</span><span class="l">条有效</span></div><div class="st2 er"><span class="n" id="statErr">0</span><span class="l">条异常</span></div><div class="st2 tot" style="margin-left:auto"><span class="n" id="statTotal">0</span><span class="l">条总计</span></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><button class="btn btn-g" onclick="generateBatch()" id="genBatchBtn">&#9889; 生成全部链接</button><button class="btn btn-gh" onclick="clearBatch()">&#128465; 清空</button></div>
         </div>
-        <div class="form-group">
-            <label for="refid">Refid</label>
-            <input type="text" id="refid" placeholder="例如：123456" value="123456">
-        </div>
-        <div class="form-group">
-            <label for="noteid">笔记ID</label>
-            <input type="text" id="noteid" placeholder="例如：6123456789">
-        </div>
-        <button onclick="generateLinks()">生成链接</button>
+        <div class="tw" style="border:none;border-top:1px solid var(--border);border-radius:0"><table><thead><tr><th style="width:36px">#</th><th>备注</th><th>笔记ID</th><th>App 链接</th><th>RefID</th><th>状态</th><th style="width:40px"></th></tr></thead><tbody id="batchTableBody"></tbody></table></div>
+      </div>
     </div>
-
-    <!-- 批量生成 -->
-    <div class="card tab-content" id="batchTab" style="display: none;">
-        <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label>上传文件（支持 .txt 或 .csv，必须是「笔记ID,投放链接,refid」格式）</label>
-                <button class="copy-btn" style="background: #FF9800; width:auto;" onclick="downloadTemplate()">下载CSV模板</button>
-            </div>
-            <input type="file" id="batchFile" accept=".txt,.csv">
-        </div>
-        <button onclick="generateBatchLinks()">批量生成</button>
-
-        <div class="result-item" id="batchResult" style="display: none; margin-top: 20px;">
-            <div class="result-label">
-                <span>批量生成结果（CSV格式）</span>
-                <button class="copy-btn" onclick="copyToClipboard('batchResultText')">复制全部</button>
-                <button class="copy-btn" style="margin-left: 8px; background-color: #2196F3;" onclick="downloadBatchCsv()">下载CSV</button>
-            </div>
-            <textarea id="batchResultText" readonly style="min-height: 250px;"></textarea>
-        </div>
+    <div id="batchResults" style="display:none">
+      <div class="rhdr"><span class="rlbl">批量结果</span><span class="rmeta" id="batchResultsMeta"></span></div>
+      <div id="batchResultsContent"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-g" onclick="downloadAllResults()">&#128229; 下载全部结果（CSV）</button><button class="btn btn-gh" onclick="regenerateBatch()">&#128260; 重新生成</button></div>
     </div>
-
-    <!-- 单个结果 -->
-    <div class="card" id="resultCard" style="display: none;">
-        <h3 style="margin-bottom: 16px; color: #333;">生成结果</h3>
-        
-        <div class="result-item">
-            <div class="result-label">
-                <span>DP (Deeplink) 链接</span>
-                <button class="copy-btn" onclick="copyToClipboard('dpResult')">复制</button>
-            </div>
-            <textarea id="dpResult" readonly></textarea>
-        </div>
-
-        <div class="result-item">
-            <div class="result-label">
-                <span>Universal Link</span>
-                <button class="copy-btn" onclick="copyToClipboard('ulResult')">复制</button>
-            </div>
-            <textarea id="ulResult" readonly></textarea>
-        </div>
-
-        <div class="result-item">
-            <div class="result-label">
-                <span>兜底链接</span>
-                <button class="copy-btn" onclick="copyToClipboard('fallbackResult')">复制</button>
-            </div>
-            <textarea id="fallbackResult" readonly></textarea>
-        </div>
-
-        <div class="result-item">
-            <div class="result-label">
-                <span>监测链接</span>
-                <button class="copy-btn" onclick="copyToClipboard('trackResult')">复制</button>
-            </div>
-            <textarea id="trackResult" readonly></textarea>
-        </div>
+  </div>
+  <section class="ms"><div class="ms-hdr"><span>&#128203;</span><h3>宏参数说明</h3></div>
+    <div class="ms-body">
+      <div class="mi"><code>__CLICK_ID__</code><span>点击追踪ID</span></div><div class="mi"><code>__XHS_BACK_URL__</code><span>小红书回调URL</span></div><div class="mi"><code>__XHS_NOTE_ID__</code><span>笔记ID</span></div><div class="mi"><code>__OAID_MD5__</code><span>OAID MD5（设备）</span></div><div class="mi"><code>__CAID__</code><span>CAID 标识</span></div><div class="mi"><code>__IDFA__</code><span>IDFA（iOS设备）</span></div><div class="mi"><code>__TS__</code><span>时间戳</span></div><div class="mi"><code>__CREATIVITY_ID__</code><span>创意ID</span></div><div class="mi"><code>__UNIT_ID__</code><span>广告组ID</span></div><div class="mi"><code>__CAMPAIGN_ID__</code><span>广告计划ID</span></div><div class="mi"><code>__OS__</code><span>操作系统</span></div><div class="mi"><code>__ADVERTISER_ID__</code><span>广告主ID</span></div><div class="mi"><code>__PAID__</code><span>是否付费流量</span></div><div class="mi"><code>__KEYWORD_ID__</code><span>关键词ID</span></div><div class="mi"><code>__NOTE_ID__</code><span>笔记ID（监测）</span></div><div class="mi"><code>__IMEI__</code><span>IMEI（安卓设备）</span></div><div class="mi"><code>__CAID_MD5__</code><span>CAID MD5</span></div>
     </div>
-
-    <div class="footer">
-        由龙虾哥 🦞 倾情制作，用完直接点复制就可以用啦
+  </section>
+  <section class="ds"><div class="st">&#127760; 外部访问部署指南</div>
+    <div class="dc">
+      <div class="dc-hdr"><div><h3>让外部人员访问此工具</h3><p>纯 HTML 文件，无需后端服务器，部署到任意静态托管平台即可</p></div></div>
+      <div class="dc-body">
+        <div class="do">
+          <div class="do-op sel" onclick="selDeploy(this,'vercel')" id="d-vercel"><div class="n">&#9889; Vercel</div><div class="d">免费、自动 HTTPS、CDN 加速，全球可访问</div><div class="tag">推荐</div></div>
+          <div class="do-op" onclick="selDeploy(this,'netlify')" id="d-netlify"><div class="n">&#127760; Netlify</div><div class="d">拖拽即部署，自定义域名，免费 SSL</div><div class="tag or">备选</div></div>
+          <div class="do-op" onclick="selDeploy(this,'github')" id="d-github"><div class="n">&#128049; GitHub Pages</div><div class="d">配合 GitHub 仓库使用，免费但需配置</div><div class="tag or">免费</div></div>
+        </div>
+        <div class="dst" id="deploySteps"></div>
+        <div class="sec"><span>&#128274;</span><span><strong>安全说明：</strong>该工具完全运行在浏览器本地，不向后端发送任何信息。部署后任何知道链接的人都可以使用。如需限制访问，Vercel Pro / Netlify 均支持密码保护。</span></div>
+      </div>
     </div>
+  </section>
+</div>
+<div class="toast" id="toast"><span>&#10003;</span><span id="toastMsg">已复制</span></div>
+<script>(function(){
+var DP='tctclient://web/main?url=';
+var UL='https://m.17u.cn/app/links/web/main?url=';
+var CP='&btn_from=xhs&clickid=__CLICK_ID__&backXHS=__XHS_BACK_URL__&noteid=__XHS_NOTE_ID__&oaidmd5=__OAID_MD5__&caid=__CAID__&idfa=__IDFA__&ts=__TS__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&wakeRefid=';
+var FP='&wakeDM=xhs&wakeRefid=';
+var MB='https://appnew.ly.com/addap/attribution?aaid=53';
+var MP='&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&wakeRefid=';
+var DS={vercel:['打开 <a href="https://vercel.com" target="_blank">vercel.com</a> 并登录（GitHub / 邮箱）','点击右上角 <strong>Add New...</strong> 然后导入项目，连接 GitHub 或直接上传文件夹','Vercel 会自动识别 index.html，点击 <strong>Deploy</strong>，等待约 30 秒','获得 <code>.vercel.app</code> 链接，复制发给外部人员即可！'],netlify:['打开 <a href="https://app.netlify.com" target="_blank">app.netlify.com</a> 并登录','点击 <strong>Add new site</strong> 然后 <strong>Deploy manually</strong>','将包含 index.html 的文件夹拖入上传区域','自动分配 <code>.netlify.app</code> 链接；可去 <strong>Site settings</strong> 设置密码保护'],github:['在 GitHub 新建仓库，将 index.html 放入并提交','进入仓库 <strong>Settings</strong> - <strong>Pages</strong>，Source 选择 main 分支','等待约 2 分钟，获得 <code>username.github.io/repo-name</code> 链接','如需自定义域名，在 Custom domain 中填写域名并配置 DNS']};
+var BD=[];var BR=[];
 
-    <script>
-        // 固定配置
-        const config = {
-            dpPrefix: 'tctclient://web/main?url=',
-            ulPrefix: 'https://m.17u.cn/app/links/web/main?url=',
-            commonParams: '&btn_from=xhs&clickid=CLICK_ID&backXHS=XHS_BACK_URL&noteid=XHS_NOTE_ID&oaidmd5=OAID_MD5&caid=CAID&idfa=IDFA&ts=TS&creativeid=CREATIVITY_ID&unitid=UNIT_ID&campaignid=CAMPAIGN_ID&wakeRefid=',
-            fallbackParams: '&wakeDM=xhs&wakeRefid=',
-            trackBase: 'http://appnew.ly.com/addap/attribution?aaid=53&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&wakeRefid='
-        };
+function $(id){return document.getElementById(id);}
+function $$(sel){return document.querySelectorAll(sel);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function eid(){return Math.random().toString(36).substr(2,9);}
 
-        function switchTab(tab) {
-            // 切换标签样式
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-            
-            if (tab === 'single') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById('singleTab').style.display = 'block';
-            } else {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById('batchTab').style.display = 'block';
-            }
-        }
+function toast(msg,isErr){
+  var t=$('toast');
+  $('toastMsg').textContent=msg;
+  t.className='toast'+(isErr?' er':'');
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show')},isErr?3000:2000);
+}
 
-        function generateLinks() {
-            let appLink = document.getElementById('appLink').value;
-            let refid = document.getElementById('refid').value;
-            const noteid = document.getElementById('noteid').value.trim();
+function genLinks(appUrl,refId){
+  if(!appUrl||!refId)return null;
+  var e=encodeURIComponent(appUrl);
+  return{deeplink:DP+e+CP+refId,universal:UL+e+CP+refId,fallback:UL+e+FP+refId,monitor:MB+MP+refId};
+}
 
-            // 检查前后空格
-            if (appLink !== appLink.trim() || refid !== refid.trim()) {
-                alert('投放链接或Refid前后带有空格，请去除后重试哦！');
-                return;
-            }
+function switchTab(name,self){
+  $$('.tab').forEach(function(t){t.classList.remove('active')});
+  $$('.tc').forEach(function(c){c.classList.remove('on')});
+  self.classList.add('active');
+  $('tab-'+name).classList.add('on');
+}
 
-            appLink = appLink.trim();
-            refid = refid.trim();
+function selDeploy(el,name){
+  $$('.do-op').forEach(function(o){o.classList.remove('sel')});
+  el.classList.add('sel');
+  var steps=DS[name];
+  $('deploySteps').innerHTML=steps.map(function(s,i){return'<div class="dstep"><div class="sn">'+(i+1)+'</div><div class="stx">'+s+'</div></div>';}).join('');
+}
 
-            if (!appLink || !refid) {
-                alert('请填写完整的投放链接和refid哦！');
-                return;
-            }
+function toggleCard(id){$(id).classList.toggle('on');}
 
-            const encodedAppLink = encodeURIComponent(appLink);
+function copyUrl(id,btn){
+  var text=$(id).querySelector('.lu-text').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    btn.classList.add('done');
+    btn.innerHTML='&#10003; 已复制';
+    toast('已复制到剪贴板');
+    setTimeout(function(){btn.classList.remove('done');btn.innerHTML='&#128203; 复制链接';},2000);
+  }).catch(function(){toast('复制失败，请手动选择',true);});
+}
 
-            // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
-            let dpCommonParams = config.commonParams
-                .replace(/CLICK_ID/g, '__CLICK_ID__')
-                .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                .replace(/OAID_MD5/g, '__OAID_MD5__')
-                .replace(/CAID/g, '__CAID__')
-                .replace(/IDFA/g, '__IDFA__')
-                .replace(/TS/g, '__TS__')
-                .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                .replace(/UNIT_ID/g, '__UNIT_ID__')
-                .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-            let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
-            
-            // Universal-link：所有参数都用下划线占位符
-            let ulCommonParams = config.commonParams
-                .replace(/CLICK_ID/g, '__CLICK_ID__')
-                .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                .replace(/OAID_MD5/g, '__OAID_MD5__')
-                .replace(/CAID/g, '__CAID__')
-                .replace(/IDFA/g, '__IDFA__')
-                .replace(/TS/g, '__TS__')
-                .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                .replace(/UNIT_ID/g, '__UNIT_ID__')
-                .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-            let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
-            const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
-            let trackLink = config.trackBase + refid;
+function openUrl(id){window.open($(id).querySelector('.lu-text').textContent,'_blank');}
 
-            // 填充结果
-            document.getElementById('dpResult').value = dpLink;
-            document.getElementById('ulResult').value = ulLink;
-            document.getElementById('fallbackResult').value = fallbackLink;
-            document.getElementById('trackResult').value = trackLink;
+function makeSingleCard(d){
+  return'<div class="lc '+d.cls+'"><div class="lc-hdr" onclick="toggleCard(\''+d.id+'\')"><div class="lc-left"><div class="lc-icon">'+d.icon+'</div><div><div class="lc-t">'+d.t+'</div><div class="lc-s">'+d.s+'</div></div></div><div style="display:flex;align-items:center;gap:8px"><span class="lc-tag">'+d.tag+'</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dim)"><polyline points="6 9 12 15 18 9"/></svg></div></div><div class="lc-body"><div class="lu" id="'+d.id+'"><span class="lu-text">'+esc(d.url)+'</span><div class="la"><button class="btn btn-cpy btn-sm" onclick="copyUrl(\''+d.id+'\',this)">&#128203; 复制链接</button><button class="btn btn-gh btn-sm" onclick="openUrl(\''+d.id+'\')">&#128279; 打开</button></div></div></div></div>';
+}
 
-            // 显示结果区域
-            document.getElementById('resultCard').style.display = 'block';
-            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
-        }
+function renderSingle(links,note){
+  var el=$('results-single');
+  if(!links){el.innerHTML='<div class="es"><div class="es-i">&#128203;</div><p>填写上方 App 链接和 RefID<br/>链接将自动生成于此</p></div>';$('resultsMeta').textContent='';return;}
+  var t=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  $('resultsMeta').textContent=(note?note+' · ':'')+'生成于 '+t;
+  var cards=[
+    {cls:'dp',icon:'&#128279;',t:'Deeplink 链接',s:'tctclient:// 唤端协议',tag:'DP',id:'dp-'+eid(),url:links.deeplink},
+    {cls:'ul',icon:'&#127760;',t:'Universal Link',s:'https:// 唤端直链',tag:'UL',id:'ul-'+eid(),url:links.universal},
+    {cls:'fb',icon:'&#128260;',t:'兜底链接',s:'Universal Link + 兜底参数',tag:'FB',id:'fb-'+eid(),url:links.fallback},
+    {cls:'mn',icon:'&#128200;',t:'监测链接',s:'归因监测 · appnew.ly.com',tag:'M',id:'mn-'+eid(),url:links.monitor}
+  ];
+  el.innerHTML=cards.map(makeSingleCard).join('');
+}
 
-        function generateBatchLinks() {
-            const fileInput = document.getElementById('batchFile');
+// Single tab input listeners
+var singleTimer;
+['appUrl','refId','note'].forEach(function(id){
+  $(id).addEventListener('input',function(){
+    clearTimeout(singleTimer);
+    singleTimer=setTimeout(function(){
+      var links=genLinks($('appUrl').value.trim(),$('refId').value.trim());
+      renderSingle(links,$('note').value.trim());
+    },200);
+  });
+});
 
-            if (fileInput.files.length > 0) {
-                // 处理文件上传
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    processBatchInput(e.target.result);
-                };
-                reader.readAsText(fileInput.files[0]);
-            } else {
-                alert('请先上传文件哦！可以先点击下载CSV模板，填好再上传~');
-            }
-        }
+// Deploy init
+selDeploy($('d-vercel'),'vercel');
 
-        function processBatchInput(inputText) {
-            const lines = inputText.split(/\r?\n/).filter(line => line.trim());
-            const results = [];
-            results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
+// ===== BATCH LOGIC =====
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                // 拆分：用空格或制表符分隔，匹配第一个空格（因为URL里可能有参数&不会有空格）
-                const splitIndex = line.search(/\s+/);
-                if (splitIndex === -1) {
-                    alert(`第 ${i+1} 行格式不对哦，需要是「APP链接 refid」用空格分隔`);
-                    return;
-                }
-                    // 支持三个字段：笔记ID 投放链接 refid
-                const parts = line.split(/\s+/).filter(p => p);
-                let noteId, appLink, refid;
-                
-                if (parts.length === 3) {
-                    noteId = parts[0].trim();
-                    appLink = parts[1].trim();
-                    refid = parts[2].trim();
-                } else if (parts.length === 2) {
-                    // 兼容旧格式
-                    appLink = parts[0].trim();
-                    refid = parts[1].trim();
-                    noteId = '';
-                } else {
-                    alert(`第 ${i+1} 行格式不对哦，需要是「笔记ID 投放链接 refid」三个字段，用空格分开`);
-                    return;
-                }
+// Upload zone drag/drop
+var zone=$('uploadZone');
+zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('dragover');});
+zone.addEventListener('dragleave',function(){zone.classList.remove('dragover');});
+zone.addEventListener('drop',function(e){e.preventDefault();zone.classList.remove('dragover');handleFile(e.dataTransfer.files[0]);});
+$('fileInput').addEventListener('change',function(e){handleFile(e.target.files[0]);});
 
-                // 检查前后空格
-                if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
-                    alert(`第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
-                    return;
-                }
+function handleFile(file){
+  if(!file)return;
+  var ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'||ext==='txt'){
+    var reader=new FileReader();
+    reader.onload=function(e){parseCSV(e.target.result);};
+    reader.readAsText(file);
+  } else if(ext==='xlsx'||ext==='xls'){
+    toast('Excel 文件解析需要额外库，已转为 CSV 格式上传',true);
+    toast('请导出为 CSV 格式后重新上传',true,4000);
+  } else {
+    toast('不支持的文件格式，请上传 CSV 或 TXT',true);
+  }
+}
 
-                if (!appLink || !refid) {
-                    alert(`第 ${i+1} 行内容不完整`);
-                    return;
-                }
+function parseCSV(text){
+  var lines=text.trim().split(/\r?\n/);
+  if(lines.length<2){toast('文件数据不足，至少需要1行数据',true);return;}
+  var header=lines[0].split(',').map(function(h){return h.trim().replace(/^["']|["']$/g,'');});
+  var appIdx=header.indexOf('appUrl');
+  var refIdx=header.indexOf('refId');
+  var noteIdx=header.indexOf('note');
+  if(appIdx===-1||refIdx===-1){toast('CSV 表头必须包含 appUrl 和 refId 列',true);return;}
+  BD=[];
+  for(var i=1;i<lines.length;i++){
+    var cols=lines[i].split(',').map(function(c){return c.trim().replace(/^["']|["']$/g,'');});
+    if(!cols[appIdx]||!cols[refIdx])continue;
+    BD.push({appUrl:cols[appIdx],refId:cols[refIdx],note:noteIdx>-1?cols[noteIdx]:'',status:'pending',error:''});
+  }
+  if(BD.length===0){toast('未找到有效数据行',true);return;}
+  renderBatchPreview();
+}
 
-                const encodedAppLink = encodeURIComponent(appLink);
-                // DP链接：所有参数用下划线占位符，只替换笔记ID为实际填写
-                // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
-                let dpCommonParams = config.commonParams
-                    .replace(/CLICK_ID/g, '__CLICK_ID__')
-                    .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                    .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                    .replace(/OAID_MD5/g, '__OAID_MD5__')
-                    .replace(/CAID/g, '__CAID__')
-                    .replace(/IDFA/g, '__IDFA__')
-                    .replace(/TS/g, '__TS__')
-                    .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                    .replace(/UNIT_ID/g, '__UNIT_ID__')
-                    .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-                let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
-                // Universal-link：所有参数都用下划线占位符
-                let ulCommonParams = config.commonParams
-                    .replace(/CLICK_ID/g, '__CLICK_ID__')
-                    .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                    .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                    .replace(/OAID_MD5/g, '__OAID_MD5__')
-                    .replace(/CAID/g, '__CAID__')
-                    .replace(/IDFA/g, '__IDFA__')
-                    .replace(/TS/g, '__TS__')
-                    .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                    .replace(/UNIT_ID/g, '__UNIT_ID__')
-                    .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-                let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
-                const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
-                let trackLink = config.trackBase + refid;
+function renderBatchPreview(){
+  if(BD.length===0){$('batchPreview').style.display='none';return;}
+  $('batchPreview').style.display='block';
+  var ok=BD.filter(function(r){return r.status!=='error';}).length;
+  var er=BD.filter(function(r){return r.status==='error';}).length;
+  $('statOk').textContent=ok;
+  $('statErr').textContent=er;
+  $('statTotal').textContent=BD.length;
+  $('batchMeta').textContent='已读取 '+BD.length+' 行';
+  var rows=BD.map(function(r,i){
+    var statusHTML;
+    if(r.status==='done')statusHTML='<span class="rs ok">已生成</span>';
+    else if(r.status==='error')statusHTML='<span class="rs er">'+esc(r.error||'异常')+'</span>';
+    else statusHTML='<span class="rs pen">待生成</span>';
+    return'<tr><td>'+(i+1)+'</td><td>'+esc(r.note||'—')+'</td><td class="url">'+esc(r.appUrl)+'</td><td>'+esc(r.refId)+'</td><td>'+statusHTML+'</td><td><button class="rm" onclick="removeBatchRow('+i+')" title="删除">&#10005;</button></td></tr>';
+  }).join('');
+  $('batchTableBody').innerHTML=rows;
+  $('batchResults').style.display='none';
+}
 
+function removeBatchRow(idx){
+  BD.splice(idx,1);
+  renderBatchPreview();
+}
 
-                // CSV转义：包含逗号或引号的话加引号包裹
-                const escapeCsv = (str) => {
-                    if (str.includes(',') || str.includes('"')) {
-                        return '"' + str.replace(/"/g, '""') + '"';
-                    }
-                    return str;
-                };
+function clearBatch(){
+  BD=[];BR=[];
+  $('batchPreview').style.display='none';
+  $('batchResults').style.display='none';
+  $('fileInput').value='';
+}
 
-                results.push([
-                    escapeCsv(noteId || ''),
-                    escapeCsv(appLink),
-                    escapeCsv(refid),
-                    escapeCsv(dpLink),
-                    escapeCsv(ulLink),
-                    escapeCsv(fallbackLink),
-                    escapeCsv(trackLink)
-                ].join(','));
-            }
+function generateBatch(){
+  if(BD.length===0)return;
+  $('genBatchBtn').disabled=true;
+  $('genBatchBtn').textContent='&#128231; 生成中...';
+  BR=[];
+  var delay=0;
+  BD.forEach(function(row,i){
+    setTimeout(function(){
+      var links=genLinks(row.appUrl,row.refId);
+      if(links){
+        row.status='done';
+        row.links=links;
+        BR.push({appUrl:row.appUrl,refId:row.refId,note:row.note,links:links});
+      } else {
+        row.status='error';
+        row.error='参数异常';
+      }
+      if(i===BD.length-1){
+        setTimeout(function(){
+          $('genBatchBtn').disabled=false;
+          $('genBatchBtn').innerHTML='&#9889; 生成全部链接';
+          renderBatchResults();
+        },300);
+      }
+    },delay);
+    delay+=50;
+  });
+}
 
-            const resultText = results.join('\n');
-            document.getElementById('batchResultText').value = resultText;
-            document.getElementById('batchResult').style.display = 'block';
-            document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
-            window.batchResults = resultText; // 保存供下载
-        }
+function renderBatchResults(){
+  $('batchPreview').style.display='none';
+  $('batchResults').style.display='block';
+  var t=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  $('batchResultsMeta').textContent='共 '+BR.length+' 条 · 生成于 '+t;
+  if(BR.length===0){$('batchResultsContent').innerHTML='<div class="es"><div class="es-i">&#9889;</div><p>没有生成任何链接</p></div>';return;}
+  var html=BR.map(function(r,i){
+    return'<div class="bi"><div class="bi-hdr" onclick="toggleBatchCard(\''+i+'\')"><div class="bi-left"><span class="bi-n">#'+(i+1)+'</span>'+(r.note?'<span class="bi-note">'+esc(r.note)+'</span>':'')+'<span class="bi-ref">ref: '+esc(r.refId)+'</span></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dim)"><polyline points="6 9 12 15 18 9"/></svg></div><div class="bi-body" id="bcard-'+i+'"><div class="mc dp"><div class="mc-l"><span class="dot"></span>Deeplink</div><span class="mc-url">'+esc(r.links.deeplink)+'</span><button class="btn btn-cpy btn-sm" onclick="copyBatchUrl(\''+esc(r.links.deeplink)+'\',this)">&#128203; 复制</button></div><div class="mc ul"><div class="mc-l"><span class="dot"></span>Universal</div><span class="mc-url">'+esc(r.links.universal)+'</span><button class="btn btn-cpy btn-sm" onclick="copyBatchUrl(\''+esc(r.links.universal)+'\',this)">&#128203; 复制</button></div><div class="mc fb"><div class="mc-l"><span class="dot"></span>兜底链接</div><span class="mc-url">'+esc(r.links.fallback)+'</span><button class="btn btn-cpy btn-sm" onclick="copyBatchUrl(\''+esc(r.links.fallback)+'\',this)">&#128203; 复制</button></div><div class="mc mn"><div class="mc-l"><span class="dot"></span>监测链接</div><span class="mc-url">'+esc(r.links.monitor)+'</span><button class="btn btn-cpy btn-sm" onclick="copyBatchUrl(\''+esc(r.links.monitor)+'\',this)">&#128203; 复制</button></div></div></div>';
+  }).join('');
+  $('batchResultsContent').innerHTML=html;
+}
 
-        function downloadBatchCsv() {
-            if (!window.batchResults) return;
-            const blob = new Blob([window.batchResults], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'xhs-links-' + new Date().getTime() + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+function toggleBatchCard(i){var el=$('bcard-'+i);if(el)el.style.display=el.style.display==='none'?'':'none';}
 
-        // 下载CSV模板
-        function downloadTemplate() {
-            const templateContent = '笔记ID,投放链接,refid\n6123456789,https://mp.elong.com/tenthousandaura/?activitycode=xxx,123456\n6987654321,https://mp.elong.com/another-activity/,789012\n';
-            const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'xhs-link-template.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+function copyBatchUrl(text,btn){
+  navigator.clipboard.writeText(text).then(function(){
+    btn.classList.add('done');
+    btn.innerHTML='&#10003; 已复制';
+    toast('已复制到剪贴板');
+    setTimeout(function(){btn.classList.remove('done');btn.innerHTML='&#128203; 复制';},2000);
+  }).catch(function(){toast('复制失败',true);});
+}
 
-        // 处理CSV文件读取，处理逗号分隔
-        const originalProcessBatchInput = processBatchInput;
-        function processBatchInput(inputText) {
-            // 判断是不是CSV逗号分隔格式
-            const firstLine = inputText.split(/\r?\n/)[0];
-            if (firstLine.includes(',')) {
-                // CSV格式，逐行解析
-                const lines = inputText.split(/\r?\n/).filter(line => line.trim());
-                const results = [];
-                results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
-                
-                // 跳过表头（如果表头是第一行）
-                const startLine = lines[0].includes('笔记ID') || lines[0].includes('noteid') ? 1 : 0;
+function downloadAllResults(){
+  if(BR.length===0)return;
+  var csv='note,refId,appUrl,deeplink,universal,fallback,monitor\n';
+  BR.forEach(function(r){
+    var row=[r.note,r.refId,'"'+r.appUrl+'"','"'+r.links.deeplink+'"','"'+r.links.universal+'"','"'+r.links.fallback+'"','"'+r.links.monitor+'"'];
+    csv+=row.map(function(v){return v;}).join(',')+'\n';
+  });
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='xhs-links-'+(new Date().toISOString().slice(0,10))+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV 下载成功');
+}
 
-                for (let i = startLine; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    // 处理CSV格式：支持带引号的字段
-                    let parts = [];
-                    let inQuote = false;
-                    let current = '';
-                    for (let c of line) {
-                        if (c === '"') {
-                            inQuote = !inQuote;
-                        } else if (c === ',' && !inQuote) {
-                            parts.push(current);
-                            current = '';
-                        } else {
-                            current += c;
-                        }
-                    }
-                    parts.push(current);
-                    parts = parts.map(p => p.trim());
+function downloadTemplate(){
+  var csv='appUrl,refId,note\nhttps://mp.elong.com/tenthousandaura/?activitycode=test,123456,测试备注\n';
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='xhs-link-template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('模板下载成功');
+}
 
-                    if (parts.length < 3) {
-                        alert(`CSV第 ${i+1} 行格式不对哦，需要「笔记ID,投放链接,refid」三个字段`);
-                        return;
-                    }
+function regenerateBatch(){
+  BR=[];
+  $('batchResults').style.display='none';
+  renderBatchPreview();
+}
 
-                    const noteId = parts[0].trim();
-                    const appLink = parts[1].trim();
-                    const refid = parts[2].trim();
-
-                    // 检查前后空格
-                    if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
-                        alert(`CSV第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
-                        return;
-                    }
-
-                    if (!appLink || !refid) {
-                        alert(`CSV第 ${i+1} 行内容不完整`);
-                        return;
-                    }
-
-                    const encodedAppLink = encodeURIComponent(appLink);
-                    // DP链接和Universal-link格式完全一致：所有参数都用下划线占位符
-                    let dpCommonParams = config.commonParams
-                        .replace(/CLICK_ID/g, '__CLICK_ID__')
-                        .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                        .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                        .replace(/OAID_MD5/g, '__OAID_MD5__')
-                        .replace(/CAID/g, '__CAID__')
-                        .replace(/IDFA/g, '__IDFA__')
-                        .replace(/TS/g, '__TS__')
-                        .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                        .replace(/UNIT_ID/g, '__UNIT_ID__')
-                        .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-                    let dpLink = config.dpPrefix + encodedAppLink + dpCommonParams + refid;
-                    // Universal-link：所有参数都用下划线占位符
-                    let ulCommonParams = config.commonParams
-                        .replace(/CLICK_ID/g, '__CLICK_ID__')
-                        .replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__')
-                        .replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__')
-                        .replace(/OAID_MD5/g, '__OAID_MD5__')
-                        .replace(/CAID/g, '__CAID__')
-                        .replace(/IDFA/g, '__IDFA__')
-                        .replace(/TS/g, '__TS__')
-                        .replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__')
-                        .replace(/UNIT_ID/g, '__UNIT_ID__')
-                        .replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__');
-                    let ulLink = config.ulPrefix + encodedAppLink + ulCommonParams + refid;
-                    const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
-                    let trackLink = config.trackBase + refid;
-
-                    // CSV转义
-                    const escapeCsv = (str) => {
-                        if (str.includes(',') || str.includes('"')) {
-                            return '"' + str.replace(/"/g, '""') + '"';
-                        }
-                        return str;
-                    };
-
-                    results.push([
-                        escapeCsv(noteId || ''),
-                        escapeCsv(appLink),
-                        escapeCsv(refid),
-                        escapeCsv(dpLink),
-                        escapeCsv(ulLink),
-                        escapeCsv(fallbackLink),
-                        escapeCsv(trackLink)
-                    ].join(','));
-                }
-
-                const resultText = results.join('\n');
-                document.getElementById('batchResultText').value = resultText;
-                document.getElementById('batchResult').style.display = 'block';
-                document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
-                window.batchResults = resultText;
-            } else {
-                // 原格式空格分隔处理
-                const lines = inputText.split(/\r?\n/).filter(line => line.trim());
-                const results = [];
-                results.push(['笔记ID', '投放链接', 'refid', 'DP链接', 'Universal Link', '兜底链接', '监测链接'].join(','));
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    const parts = line.split(/\s+/).filter(p => p);
-                    let noteId, appLink, refid;
-                    
-                    if (parts.length === 3) {
-                        noteId = parts[0].trim();
-                        appLink = parts[1].trim();
-                        refid = parts[2].trim();
-                    } else if (parts.length === 2) {
-                        appLink = parts[0].trim();
-                        refid = parts[1].trim();
-                        noteId = '';
-                    } else {
-                        alert(`第 ${i+1} 行格式不对哦，需要是「笔记ID 投放链接 refid」三个字段，用空格分开`);
-                        return;
-                    }
-
-                    if (appLink !== appLink.trim() || refid !== refid.trim() || (noteId && noteId !== noteId.trim())) {
-                        alert(`第 ${i+1} 行：链接或refid前后带有空格，请去除后重试`);
-                        return;
-                    }
-
-                    if (!appLink || !refid) {
-                        alert(`第 ${i+1} 行内容不完整`);
-                        return;
-                    }
-
-                    const encodedAppLink = encodeURIComponent(appLink);
-                    let dpLink = config.dpPrefix + encodedAppLink + config.commonParams + refid;
-                    let ulLink = config.ulPrefix + encodedAppLink + config.commonParams.replace(/CLICK_ID/g, '__CLICK_ID__').replace(/XHS_BACK_URL/g, '__XHS_BACK_URL__').replace(/XHS_NOTE_ID/g, '__XHS_NOTE_ID__').replace(/OAID_MD5/g, '__OAID_MD5__').replace(/CAID/g, '__CAID__').replace(/IDFA/g, '__IDFA__').replace(/TS/g, '__TS__').replace(/CREATIVITY_ID/g, '__CREATIVITY_ID__').replace(/UNIT_ID/g, '__UNIT_ID__').replace(/CAMPAIGN_ID/g, '__CAMPAIGN_ID__') + refid;
-                    const fallbackLink = config.ulPrefix + encodedAppLink + config.fallbackParams + refid;
-                    let trackLink = config.trackBase + refid;
-
-                    if (noteId) {
-                        trackLink = trackLink.replace(/__NOTE_ID__&/, noteId + '&');
-                    }
-
-                    const escapeCsv = (str) => {
-                        if (str.includes(',') || str.includes('"')) {
-                            return '"' + str.replace(/"/g, '""') + '"';
-                        }
-                        return str;
-                    };
-
-                    results.push([
-                        escapeCsv(noteId || ''),
-                        escapeCsv(appLink),
-                        escapeCsv(refid),
-                        escapeCsv(dpLink),
-                        escapeCsv(ulLink),
-                        escapeCsv(fallbackLink),
-                        escapeCsv(trackLink)
-                    ].join(','));
-                }
-
-                const resultText = results.join('\n');
-                document.getElementById('batchResultText').value = resultText;
-                document.getElementById('batchResult').style.display = 'block';
-                document.getElementById('batchResult').scrollIntoView({ behavior: 'smooth' });
-                window.batchResults = resultText;
-            }
-        }
-
-        // 处理文件上传变化
-        document.getElementById('batchFile').addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                const fileName = e.target.files[0].name;
-                const label = e.target.previousElementSibling.querySelector('label');
-                console.log(e.target);
-                e.target.previousElementSibling.querySelector('label').textContent = `已选择文件：${fileName}`;
-            }
-        });
-
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            element.select();
-            document.execCommand('copy');
-            
-            const btn = element.previousElementSibling.querySelector('.copy-btn');
-            const originalText = btn.textContent;
-            btn.textContent = '已复制!';
-            setTimeout(() => {
-                btn.textContent = originalText;
-            }, 1500);
-        }
-
-        // 回车触发生成
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    generateLinks();
-                }
-            });
-        });
-    </script>
+window.switchTab=switchTab;
+window.selDeploy=selDeploy;
+window.toggleCard=toggleCard;
+window.copyUrl=copyUrl;
+window.openUrl=openUrl;
+window.downloadTemplate=downloadTemplate;
+window.generateBatch=generateBatch;
+window.clearBatch=clearBatch;
+window.removeBatchRow=removeBatchRow;
+window.downloadAllResults=downloadAllResults;
+window.regenerateBatch=regenerateBatch;
+window.toggleBatchCard=toggleBatchCard;
+window.copyBatchUrl=copyBatchUrl;
+})();
+</script>
 </body>
 </html>
