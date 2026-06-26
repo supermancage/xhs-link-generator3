@@ -118,33 +118,74 @@
         // CSV \u683c\u5f0f\uff08\u542b\u9017\u53f7\uff09
         if (line.includes(",")) {
             var parts = parseCsvLine(line);
-            if (parts.length < 3) {
-                throw new Error(lineLabel + " \u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u9700\u8981 `\u7b14\u8bb0ID,\u6295\u653e\u94fe\u63a5,refid` \u4e09\u5217");
+
+            // \u65b0\u683c\u5f0f\uff1a\u542b\u547d\u540d\u5b57\u6bb5\uff08\u226510\u5217\uff09
+            if (parts.length >= 10) {
+                return {
+                    noteId: parts[0],
+                    appLink: parts[1],
+                    refid: parts[2],
+                    materialType: parts[3] || "",
+                    bizLine: parts[4] || "",
+                    contentType: parts[5] || "",
+                    city: parts[6] || "",
+                    hotelName: parts[7] || "",
+                    activity: parts[8] || "",
+                    targeting: parts[9] || "",
+                    lineLabel: lineLabel
+                };
             }
+
+            // \u65e7\u683c\u5f0f\uff1a\u4ec5\u94fe\u63a5\uff08\u22653\u5217\uff09
+            if (parts.length >= 3) {
+                return {
+                    noteId: parts[0],
+                    appLink: parts[1],
+                    refid: parts[2],
+                    materialType: "",
+                    bizLine: "",
+                    contentType: "",
+                    city: "",
+                    hotelName: "",
+                    activity: "",
+                    targeting: "",
+                    lineLabel: lineLabel
+                };
+            }
+
+            throw new Error(lineLabel + " \u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u9700\u8981 `\u7b14\u8bb0ID,\u6295\u653e\u94fe\u63a5,refid` \u6216\u542b\u547d\u540d\u5b57\u6bb5\u7684\u5b8c\u6574\u683c\u5f0f");
+        }
+
+        // \u7a7a\u683c\u5206\u9694\u683c\u5f0f\uff08\u4fdd\u6301\u65e7\u6709\u903b\u8f91\uff09
+        var spaceParts = line.split(/\s+/).filter(Boolean);
+        if (spaceParts.length === 3) {
             return {
-                noteId: parts[0],
-                appLink: parts[1],
-                refid: parts[2],
+                noteId: spaceParts[0],
+                appLink: spaceParts[1],
+                refid: spaceParts[2],
+                materialType: "",
+                bizLine: "",
+                contentType: "",
+                city: "",
+                hotelName: "",
+                activity: "",
+                targeting: "",
                 lineLabel: lineLabel
             };
         }
 
-        // \u7a7a\u683c\u5206\u9694\u683c\u5f0f
-        var parts = line.split(/\s+/).filter(Boolean);
-        if (parts.length === 3) {
-            return {
-                noteId: parts[0],
-                appLink: parts[1],
-                refid: parts[2],
-                lineLabel: lineLabel
-            };
-        }
-
-        if (parts.length === 2) {
+        if (spaceParts.length === 2) {
             return {
                 noteId: "",
-                appLink: parts[0],
-                refid: parts[1],
+                appLink: spaceParts[0],
+                refid: spaceParts[1],
+                materialType: "",
+                bizLine: "",
+                contentType: "",
+                city: "",
+                hotelName: "",
+                activity: "",
+                targeting: "",
                 lineLabel: lineLabel
             };
         }
@@ -174,7 +215,11 @@
         var previewRows = [];
         var results = [];
         var errors = [];
-        var headers = ["\u7b14\u8bb0ID", "\u6295\u653e\u94fe\u63a5", "refid", "DP\u94fe\u63a5", "Universal Link", "\u515c\u5e95\u94fe\u63a5", "\u76d1\u6d4b\u94fe\u63a5"];
+        var headers = ["\u7b14\u8bb0ID", "\u6295\u653e\u94fe\u63a5", "refid",
+            "\u7d20\u6750\u7c7b\u578b", "\u4e1a\u52a1\u7ebf", "\u5185\u5bb9\u7c7b\u578b",
+            "\u9152\u5e97\u57ce\u5e02", "\u9152\u5e97\u540d\u79f0", "\u6295\u653e\u6d3b\u52a8", "\u5b9a\u5411",
+            "\u5e7f\u544a\u8ba1\u5212\u547d\u540d",
+            "DP\u94fe\u63a5", "Universal Link", "\u515c\u5e95\u94fe\u63a5", "\u76d1\u6d4b\u94fe\u63a5"];
         results.push(headers.join(","));
         previewRows.push(headers);
 
@@ -190,10 +235,33 @@
                     refid: item.refid.trim()
                 });
 
+                // \u751f\u6210\u547d\u540d
+                var naming = "";
+                if (item.materialType) {
+                    naming = global.LinkGenNaming.buildNaming({
+                        materialType: item.materialType,
+                        bizLine: item.bizLine,
+                        contentType: item.contentType,
+                        city: item.city,
+                        hotelName: item.hotelName,
+                        noteId: item.noteId,
+                        activity: item.activity,
+                        targeting: item.targeting
+                    });
+                }
+
                 results.push([
                     escapeCsv(item.noteId.trim()),
                     escapeCsv(item.appLink.trim()),
                     escapeCsv(item.refid.trim()),
+                    escapeCsv(item.materialType),
+                    escapeCsv(item.bizLine),
+                    escapeCsv(item.contentType),
+                    escapeCsv(item.city),
+                    escapeCsv(item.hotelName),
+                    escapeCsv(item.activity),
+                    escapeCsv(item.targeting),
+                    escapeCsv(naming),
                     escapeCsv(built.dpLink),
                     escapeCsv(built.ulLink),
                     escapeCsv(built.fallbackLink),
@@ -204,6 +272,14 @@
                     item.noteId.trim(),
                     item.appLink.trim(),
                     item.refid.trim(),
+                    item.materialType,
+                    item.bizLine,
+                    item.contentType,
+                    item.city,
+                    item.hotelName,
+                    item.activity,
+                    item.targeting,
+                    naming,
                     built.dpLink,
                     built.ulLink,
                     built.fallbackLink,
