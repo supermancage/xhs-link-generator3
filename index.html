@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小红书投放链接生成器</title>
+    <title>小红书投放工具箱</title>
     <link rel="stylesheet" href="css/style.css" charset="utf-8">
 </head>
 <body>
-    <h1>小红书投放链接生成器</h1>
+    <h1>小红书投放工具箱</h1>
 
     <div class="tabs">
         <button class="tab-btn active" type="button" data-tab="single">单个生成</button>
@@ -28,6 +28,65 @@
             <label for="noteid">笔记 ID</label>
             <input type="text" id="noteid" placeholder="例如：123456789">
         </div>
+
+        <hr class="form-divider">
+        <div class="section-label">广告计划命名</div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingMaterialType">素材类型</label>
+                <select id="namingMaterialType">
+                    <option value="图文">图文</option>
+                    <option value="视频">视频</option>
+                    <option value="直播">直播</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="namingBizLine">业务线</label>
+                <select id="namingBizLine">
+                    <option value="酒店">酒店</option>
+                    <option value="机票">机票</option>
+                    <option value="火车票">火车票</option>
+                    <option value="度假">度假</option>
+                    <option value="门票">门票</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingContentType">内容类型</label>
+                <select id="namingContentType">
+                    <option value="非标种草">非标种草</option>
+                    <option value="羊毛帖">羊毛帖</option>
+                    <option value="攻略贴">攻略贴</option>
+                    <option value="测评贴">测评贴</option>
+                    <option value="引流贴">引流贴</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="namingCity">酒店城市/目的地</label>
+                <input type="text" id="namingCity" placeholder="例如：珠海">
+            </div>
+        </div>
+
+        <div class="form-group" id="hotelNameGroup" style="display: none;">
+            <label for="namingHotelName">酒店名称</label>
+            <input type="text" id="namingHotelName" placeholder="例如：珠海青竹书院酒店">
+            <div class="help-text">仅「非标种草」需要填写酒店名称</div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingActivity">投放活动</label>
+                <input type="text" id="namingActivity" placeholder="例如：酒店内部价">
+            </div>
+            <div class="form-group">
+                <label for="namingTargeting">定向</label>
+                <input type="text" id="namingTargeting" placeholder="可选，为空时不拼接">
+            </div>
+        </div>
+
         <button type="button" id="generateSingleBtn">生成链接</button>
     </div>
 
@@ -35,11 +94,15 @@
     <div class="card tab-content" id="batchTab" style="display: none;">
         <div class="form-group">
             <div class="inline-row">
-                <label for="batchFile">上传文件（支持 `.txt` 或 `.csv`，推荐格式：`笔记ID,投放链接,refid`）</label>
+                <label for="batchFile">上传文件（支持 `.txt` 或 `.csv`，格式：`笔记ID,投放链接,refid,素材类型,业务线,内容类型,酒店城市,酒店名称,投放活动,定向`）</label>
                 <button class="template-btn copy-btn" type="button" id="downloadTemplateBtn">下载 CSV 模板</button>
             </div>
             <input type="file" id="batchFile" accept=".txt,.csv">
             <div class="help-text" id="selectedFileText">未选择文件</div>
+            <div class="help-text" style="margin-top: 4px;">
+                推荐格式1（含命名）：笔记ID,投放链接,refid,素材类型,业务线,内容类型,酒店城市,酒店名称,投放活动,定向<br>
+                推荐格式2（仅链接）：笔记ID,投放链接,refid
+            </div>
         </div>
         <button type="button" id="generateBatchBtn">批量生成</button>
 
@@ -94,6 +157,14 @@
 
         <div class="result-item">
             <div class="result-label">
+                <span>广告计划命名</span>
+                <button class="copy-btn" type="button" data-copy-target="namingResult">复制</button>
+            </div>
+            <textarea id="namingResult" readonly></textarea>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
                 <span>DP (Deeplink) 链接</span>
                 <button class="copy-btn" type="button" data-copy-target="dpResult">复制</button>
             </div>
@@ -126,12 +197,13 @@
     </div>
 
     <div class="footer">
-        按你的确认版本整理完成，支持单个生成和更清爽的批量结果预览。
+        支持单个/批量生成投放链接与广告计划命名。
     </div>
 
-    <!-- JS 依赖：先加载配置，再加载核心逻辑，最后加载 UI -->
+    <!-- JS 依赖：先加载配置，再加载核心逻辑，然后加载命名模块，最后加载 UI -->
     <script src="js/config.js" charset="utf-8"></script>
     <script src="js/generator.js" charset="utf-8"></script>
+    <script src="js/naming.js" charset="utf-8"></script>
     <script src="js/ui.js" charset="utf-8"></script>
     <script>
         // 初始化 UI
