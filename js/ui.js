@@ -318,6 +318,10 @@
      * \u4e0b\u8f7d\u6279\u91cf\u751f\u6210\u7684 Excel
      */
     function downloadBatchXlsx() {
+        if (typeof XLSX === "undefined") {
+            showToast("Excel \u5e93\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5", "error");
+            return;
+        }
         if (!batchResults) {
             showToast("\u8fd8\u6ca1\u6709\u6279\u91cf\u7ed3\u679c\u53ef\u4e0b\u8f7d", "error");
             return;
@@ -347,6 +351,11 @@
      * \u4e0b\u8f7d Excel \u6a21\u677f\u6587\u4ef6
      */
     function downloadXlsxTemplate() {
+        if (typeof XLSX === "undefined") {
+            showToast("Excel \u5e93\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5", "error");
+            return;
+        }
+        try {
         var data = [
             ["\u7b14\u8bb0ID", "\u6295\u653e\u94fe\u63a5", "refid",
              "\u7d20\u6750\u7c7b\u578b", "\u4e1a\u52a1\u7ebf", "\u5185\u5bb9\u7c7b\u578b",
@@ -370,6 +379,9 @@
         XLSX.utils.book_append_sheet(wb, ws, "Template");
         XLSX.writeFile(wb, "xhs-link-template.xlsx");
         showToast("Excel \u6a21\u677f\u4e0b\u8f7d\u5df2\u5f00\u59cb", "success");
+        } catch (e) {
+            showToast("Excel \u4e0b\u8f7d\u5931\u8d25\uff1a" + e.message, "error");
+        }
     }
 
     /* ========== \u590d\u5236\u5230\u526a\u8d34\u677f ========== */
