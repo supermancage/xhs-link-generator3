@@ -13,7 +13,7 @@
             "&btn_from=xhs&clickid=CLICK_ID&backXHS=XHS_BACK_URL&noteid=XHS_NOTE_ID&oaidmd5=OAID_MD5&caid=CAID&idfa=IDFA&ts=TS&creativeid=CREATIVITY_ID&unitid=UNIT_ID&campaignid=CAMPAIGN_ID&wakeRefid=",
         fallbackParams: "&wakeDM=xhs&wakeRefid=",
         trackBase:
-            "https://appnew.ly.com/addap/attribution?aaid=53&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&wakeRefid="
+            "https://appnew.ly.com/addap/attribution?aaid=53&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&refid="
     };
 
     /** \u94fe\u63a5\u6a21\u677f\u4e2d\u7684\u5360\u4f4d\u7b26\u6620\u5c04 */
