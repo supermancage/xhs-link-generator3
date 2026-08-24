@@ -29,7 +29,8 @@ KC.UI.PAGE_SIZE = PAGE_SIZE;
 
 // ── 输入上限（防止超大文件/超长文本导致页面卡死）──
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-const MAX_ROWS = 50000;                 // 有效行数上限
+const MAX_ROWS = 1000000;               // 有效行数上限
+const MAX_ROWS_LABEL = '100万';         // 行数上限提示文案（与 MAX_ROWS 保持同步）
 
 let allResults = [];
 let filteredResults = [];
@@ -95,7 +96,7 @@ async function runClassify() {
       const text = document.getElementById('kw-text').value.trim();
       if (!text) { showLoading(false); alert('请输入关键词'); return; }
       raw = text.split('\n').map(s => s.trim()).filter(Boolean);
-      if (raw.length > MAX_ROWS) { showLoading(false); alert('关键词数量超过 ' + MAX_ROWS + ' 行上限，请拆分后重试'); return; }
+      if (raw.length > MAX_ROWS) { showLoading(false); alert('关键词数量超过 ' + MAX_ROWS_LABEL + ' 行上限，请拆分后重试'); return; }
     } else {
       if (typeof XLSX === 'undefined') { showLoading(false); alert('Excel 解析库未加载，请刷新页面重试或使用粘贴模式'); return; }
       const file = document.getElementById('file-input').files[0];
@@ -116,7 +117,7 @@ async function runClassify() {
       const colAdBizLine = parseInt(document.getElementById('col-ad-biz-line').value) || 0;
       const rowStart = parseInt(document.getElementById('row-start').value) || 1;
       const range = XLSX.utils.decode_range(ws['!ref']);
-      if (range.e.r - range.s.r + 1 > MAX_ROWS) { showLoading(false); alert('有效行数超过 ' + MAX_ROWS + ' 行上限，请拆分后重试'); return; }
+      if (range.e.r - range.s.r + 1 > MAX_ROWS) { showLoading(false); alert('有效行数超过 ' + MAX_ROWS_LABEL + ' 行上限，请拆分后重试'); return; }
       for (let r = range.s.r + rowStart - 1; r <= range.e.r; r++) {
         const cell = ws[XLSX.utils.encode_cell({ r, c: col - 1 })];
         const val = cell ? (typeof cell.v === 'number' ? String(cell.v) : String(cell.v || '')) : '';
