@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书链接生成器</title>
+    <link rel="stylesheet" href="css/style.css" charset="utf-8">
+</head>
+<body>
+    <h1>小红书链接生成器</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" type="button" data-tab="single">单个生成</button>
+        <button class="tab-btn" type="button" data-tab="batch">批量生成</button>
+    </div>
+
+    <!-- 单个生成表单 -->
+    <div class="card tab-content" id="singleTab">
+        <div class="form-group">
+            <label for="appLink">投放链接（APP 链接）</label>
+            <input type="text" id="appLink" placeholder="例如：https://mp.elong.com/tenthousandaura/?activitycode=xxx" value="https://mp.elong.com/tenthousandaura/?activitycode=7d11cd76-3678-4d3f-a001-c2431031fc7c&if=5017380&of=5079371">
+        </div>
+        <div class="form-group">
+            <label for="refid">Refid</label>
+            <input type="text" id="refid" placeholder="例如：123456" value="123456">
+        </div>
+        <div class="form-group">
+            <label for="noteid">笔记 ID</label>
+            <input type="text" id="noteid" placeholder="例如：123456789">
+        </div>
+
+        <hr class="form-divider">
+        <div class="section-label">广告计划命名</div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingMaterialType">素材类型</label>
+                <select id="namingMaterialType">
+                    <option value="图文">图文</option>
+                    <option value="视频">视频</option>
+                    <option value="直播">直播</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="namingBizLine">业务线</label>
+                <select id="namingBizLine">
+                    <option value="酒店">酒店</option>
+                    <option value="机票">机票</option>
+                    <option value="火车票">火车票</option>
+                    <option value="度假">度假</option>
+                    <option value="门票">门票</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingContentType">内容类型</label>
+                <select id="namingContentType">
+                    <option value="非标种草">非标种草</option>
+                    <option value="羊毛帖">羊毛帖</option>
+                    <option value="攻略贴">攻略贴</option>
+                    <option value="测评贴">测评贴</option>
+                    <option value="引流贴">引流贴</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="namingCity">酒店城市/目的地</label>
+                <input type="text" id="namingCity" placeholder="例如：珠海">
+            </div>
+        </div>
+
+        <div class="form-group" id="hotelNameGroup" style="display: none;">
+            <label for="namingHotelName">酒店名称</label>
+            <input type="text" id="namingHotelName" placeholder="例如：珠海青竹书院酒店">
+            <div class="help-text">仅「非标种草」需要填写酒店名称</div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="form-group">
+                <label for="namingActivity">投放活动</label>
+                <input type="text" id="namingActivity" placeholder="例如：酒店内部价">
+            </div>
+            <div class="form-group">
+                <label for="namingTargeting">定向</label>
+                <input type="text" id="namingTargeting" placeholder="可选，为空时不拼接">
+            </div>
+        </div>
+
+        <button type="button" id="generateSingleBtn">生成链接</button>
+    </div>
+
+    <!-- 批量生成表单 -->
+    <div class="card tab-content" id="batchTab" style="display: none;">
+        <div class="form-group">
+            <div class="inline-row">
+                <label for="batchFile">上传文件（支持 `.xlsx` 或 `.csv`，推荐下载 Excel 模板填写后上传）</label>
+                <button class="template-btn copy-btn" type="button" id="downloadXlsxTemplateBtn">下载 Excel 模板</button>
+            </div>
+            <input type="file" id="batchFile" accept=".txt,.csv,.xlsx">
+            <div class="help-text" id="selectedFileText">未选择文件</div>
+        </div>
+        <button type="button" id="generateBatchBtn">批量生成</button>
+
+        <div class="result-item" id="batchResult" style="display: none; margin-top: 20px;">
+            <div class="result-label">
+                <span>批量生成结果</span>
+            </div>
+            <div class="result-panel">
+                <!-- 错误汇总区域 -->
+                <div id="batchErrorSummary"></div>
+
+                <div class="result-actions">
+                    <div class="result-meta">
+                        <span class="meta-chip" id="batchRowCount">0 条结果</span>
+                        <span class="meta-chip" id="batchColumnCount">0 个链接输出</span>
+                    </div>
+                    <div class="action-group">
+                        <button class="copy-btn" type="button" data-copy-target="batchResultText">复制全部</button>
+                        <button class="secondary-btn" type="button" id="downloadBatchXlsxBtn">下载 Excel</button>
+                        <button class="secondary-btn" type="button" id="downloadBatchCsvBtn">下载 CSV</button>
+                    </div>
+                </div>
+
+                <div class="section-title">结果预览</div>
+                <div class="compact-preview">
+                    <div class="table-wrap">
+                        <table class="preview-table">
+                            <thead>
+                                <tr id="batchPreviewHead"></tr>
+                            </thead>
+                            <tbody id="batchPreviewBody">
+                                <tr>
+                                    <td class="preview-empty">生成后会在这里显示预览</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <details class="csv-details">
+                    <summary>查看原始 CSV 文本</summary>
+                    <div class="csv-body">
+                        <textarea id="batchResultText" class="csv-output" readonly></textarea>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- 单个生成结果 -->
+    <div class="card" id="resultCard" style="display: none;">
+        <h3 style="margin-bottom: 16px;">生成结果</h3>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>广告计划命名</span>
+                <button class="copy-btn" type="button" data-copy-target="namingResult">复制</button>
+            </div>
+            <textarea id="namingResult" readonly></textarea>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>DP (Deeplink) 链接</span>
+                <div class="label-actions">
+                    <button class="qr-toggle" type="button" data-qr-target="dpQr">QR</button>
+                    <button class="copy-btn" type="button" data-copy-target="dpResult">复制</button>
+                </div>
+            </div>
+            <textarea id="dpResult" readonly></textarea>
+            <div class="qr-code" id="dpQr" style="display: none;"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>Universal Link</span>
+                <div class="label-actions">
+                    <button class="qr-toggle" type="button" data-qr-target="ulQr">QR</button>
+                    <button class="copy-btn" type="button" data-copy-target="ulResult">复制</button>
+                </div>
+            </div>
+            <textarea id="ulResult" readonly></textarea>
+            <div class="qr-code" id="ulQr" style="display: none;"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>兜底链接</span>
+                <div class="label-actions">
+                    <button class="qr-toggle" type="button" data-qr-target="fallbackQr">QR</button>
+                    <button class="copy-btn" type="button" data-copy-target="fallbackResult">复制</button>
+                </div>
+            </div>
+            <textarea id="fallbackResult" readonly></textarea>
+            <div class="qr-code" id="fallbackQr" style="display: none;"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">
+                <span>监测链接</span>
+                <button class="copy-btn" type="button" data-copy-target="trackResult">复制</button>
+            </div>
+            <textarea id="trackResult" readonly></textarea>
+        </div>
+    </div>
+
+    <div class="footer">
+        支持单个/批量生成投放链接与广告计划命名。
+    </div>
+
+    <!-- SheetJS：Excel 读写支持 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <!-- JS 依赖：先加载配置，再加载核心逻辑，然后加载命名模块，最后加载 UI -->
+    <script src="js/config.js" charset="utf-8"></script>
+    <script src="js/generator.js" charset="utf-8"></script>
+    <script src="js/naming.js" charset="utf-8"></script>
+    <script src="js/ui.js" charset="utf-8"></script>
+    <script>
+        // 初始化 UI
+        LinkGenUI.init();
+    </script>
+</body>
+</html>

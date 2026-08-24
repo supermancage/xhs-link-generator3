@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+.workbuddy/
+account_data.json
+target_aids.txt
+api_balances.json
+name_to_aid.json
+fetch_balances.py

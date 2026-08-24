@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智词引擎 · 同程旅行关键词智能分类平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js" defer onerror="console.warn('[词云] jsdelivr CDN 加载失败，尝试备用源')"></script>
+  <script src="https://unpkg.com/wordcloud@1.2.2/src/wordcloud2.js" defer onerror="console.warn('[词云] unpkg 备用源也加载失败，词云将不可用')"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>🔍 智词引擎</h1>
+    <p>同程旅行业务线 · 一级 7 类 / 二级意图词包 · v5.1</p>
+  </header>
+
+  <!-- 输入区 -->
+  <div class="card mb-4">
+    <div class="card-title">📥 输入关键词</div>
+    <div class="input-tabs">
+      <button class="tab-btn active" data-tab="paste" onclick="switchTab('paste')">📝 粘贴关键词</button>
+      <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">📁 上传 Excel</button>
+    </div>
+
+    <!-- 粘贴模式 -->
+    <div id="tab-paste">
+      <textarea id="kw-text" placeholder="每行一个关键词，例如：&#10;上海酒店推荐&#10;北京故宫门票&#10;五一机票特价&#10;杭州旅游攻略"></textarea>
+    </div>
+
+    <!-- 上传模式 -->
+    <div id="tab-upload" class="hidden">
+      <div class="file-area" id="dropzone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📁</div>
+        <p>点击上传 Excel 文件 或 拖拽文件到这里</p>
+        <p style="font-size:12px;color:#9ca3af;margin-top:4px;">支持 .xlsx / .xls，一行一个关键词</p>
+        <div style="margin-top:8px;padding:8px 12px;background:rgba(26,115,232,.06);border-radius:6px;font-size:12px;color:#4b5563;text-align:left;line-height:1.8;">
+          <div style="font-weight:600;color:#1a73e8;margin-bottom:2px;">📋 Excel 模板格式</div>
+          <div><span style="color:#ef4444;font-weight:600;">第一列</span>：关键词（必选）</div>
+          <div><span style="color:#f59e0b;font-weight:600;">第二列</span>：花费（可选）</div>
+          <div><span style="color:#3b82f6;font-weight:600;">第三列</span>：曝光（可选）</div>
+          <div><span style="color:#10b981;font-weight:600;">第四列</span>：点击（可选）</div>
+          <div><span style="color:#8b5cf6;font-weight:600;">第五列</span>：APP互动（可选）</div>
+          <div><span style="color:#ec4899;font-weight:600;">第六列</span>：APP打开（可选）</div>
+          <div><span style="color:#0d9488;font-weight:600;">第七列</span>：APP订单（可选）</div>
+          <div><span style="color:#6366f1;font-weight:600;">第七列之后，可选</span></div>
+        </div>
+        <div class="filename" id="filename-display"></div>
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onclick="event.stopPropagation()">
+      </div>
+      <div class="col-config">
+        <div><label>关键词所在列 (1-based)</label><input type="number" id="col-kw" value="1" min="1"></div>
+        <div><label>花费所在列 (可选)</label><input type="number" id="col-cost" value="2" min="1"></div>
+        <div><label>曝光所在列 (可选)</label><input type="number" id="col-impression" value="3" min="1"></div>
+        <div><label>点击所在列 (可选)</label><input type="number" id="col-click" value="4" min="1"></div>
+        <div><label>APP互动列 (可选)</label><input type="number" id="col-app-interact" value="5" min="1"></div>
+        <div><label>APP打开列 (可选)</label><input type="number" id="col-app-open" value="6" min="1"></div>
+        <div><label>APP订单列 (可选)</label><input type="number" id="col-app-order" value="7" min="1"></div>
+        <div><label>投放素材业务线列 (可选)</label><input type="number" id="col-ad-biz-line" value="8" min="1"></div>
+        <div><label>从第几行开始读取</label><input type="number" id="row-start" value="2" min="1"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-run" onclick="runClassify()">🚀 开始分类</button>
+      <button class="btn btn-outline" id="btn-sample" onclick="loadSample()">📌 加载示例数据</button>
+      <span id="file-info" class="file-info"></span>
+    </div>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="result-area" class="hidden">
+
+    <!-- 统计卡片 -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="stat-total">0</div><div class="label">关键词总数</div></div>
+      <div class="stat-card"><div class="num" id="stat-l1">0</div><div class="label">一级分类数</div></div>
+      <div class="stat-card"><div class="num" id="stat-l2">0</div><div class="label">二级分类数</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--green)" id="stat-time">0ms</div><div class="label">处理耗时</div></div>
+    </div>
+
+    <!-- 图表 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 一级分类分布</h3>
+        <div class="chart-wrap"><canvas id="chart-l1"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📈 二级分类占比（Top 15）</h3>
+        <div class="chart-wrap"><canvas id="chart-l2"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 数据分析模块 -->
+    <div class="card mb-4" id="analysis-section">
+      <div class="card-title">📊 数据分析（按业务线）</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+        <span style="font-size:13px;font-weight:600;color:var(--text);">分组维度:</span>
+        <select class="filter-select" id="analysis-dim-select" onchange="switchAnalysisDim()">
+          <option value="l1">业务线（L1）</option>
+          <option value="adBizLine">投放素材业务线</option>
+        </select>
+      </div>
+      <div class="analysis-tabs" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="tab-btn active" onclick="switchAnalysisTab('cost')" data-analysis="cost">💰 花费分析</button>
+        <button class="tab-btn" onclick="switchAnalysisTab('impression')" data-analysis="impression">👁 曝光分析</button>
+        <button class="tab-btn" onclick="switchAnalysisTab('click')" data-analysis="click">🖱 点击分析</button>
+
+        <button class="tab-btn" onclick="switchAnalysisTab('appInteract')" data-analysis="appInteract">📱 APP互动成本</button>
+        <button class="tab-btn" onclick="switchAnalysisTab('appOpen')" data-analysis="appOpen">📲 APP打开成本</button>
+        <button class="tab-btn" onclick="switchAnalysisTab('appOrder')" data-analysis="appOrder">🛒 APP订单成本</button>
+      </div>
+      
+      <!-- 花费分析 -->
+      <div id="analysis-cost" class="analysis-content">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-cost"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-cost">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总花费</th><th>花费占比</th><th>平均花费</th><th>曝光量</th><th>点击量</th><th>CPC</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 曝光分析 -->
+      <div id="analysis-impression" class="analysis-content hidden">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-impression"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-impression">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总曝光</th><th>曝光占比</th><th>平均曝光</th><th>点击量</th><th>CTR</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 点击分析 -->
+      <div id="analysis-click" class="analysis-content hidden">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-click"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-click">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总点击</th><th>点击占比</th><th>平均点击</th><th>花费</th><th>CPC</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      
+
+      <!-- APP互动成本分析 -->
+      <div id="analysis-appInteract" class="analysis-content hidden">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-appInteract"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-appInteract">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总消费</th><th>总APP互动</th><th>APP互动成本</th><th>消费占比</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- APP打开成本分析 -->
+      <div id="analysis-appOpen" class="analysis-content hidden">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-appOpen"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-appOpen">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总消费</th><th>总APP打开</th><th>APP打开成本</th><th>消费占比</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- APP订单成本分析 -->
+      <div id="analysis-appOrder" class="analysis-content hidden">
+        <div class="chart-wrap" style="height:300px;margin-bottom:20px;"><canvas id="chart-appOrder"></canvas></div>
+        <div class="tbl-wrap">
+          <table id="table-appOrder">
+            <thead>
+              <tr><th class="th-dim">一级分类</th><th>关键词数</th><th>总消费</th><th>总APP订单</th><th>APP订单成本</th><th>消费占比</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交叉分析模块：业务线 × 词包 -->
+    <div class="card mb-4" id="cross-analysis-section">
+      <div class="card-title">🔀 交叉分析（业务线 × 词包）</div>
+      
+      <!-- 筛选器 -->
+      <div class="cross-filter-bar" style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:12px;color:#6b7280;font-weight:600;">业务线:</span>
+          <div id="cross-filter-l1" style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="color:#9ca3af;font-size:12px;">（请先上传文件）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:12px;color:#6b7280;font-weight:600;">投放素材业务线:</span>
+          <div id="cross-filter-adbiz" style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="color:#9ca3af;font-size:12px;">（请先上传文件）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:12px;color:#6b7280;font-weight:600;">词包:</span>
+          <div id="cross-filter-l2" style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="color:#9ca3af;font-size:12px;">（请先上传文件）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12px;color:#6b7280;font-weight:600;">维度:</span>
+          <select id="cross-dim-select" onchange="switchCrossDim()" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+            <option value="l1">业务线 × 词包</option>
+            <option value="adBizLine">投放素材业务线 × 词包</option>
+          </select>
+          <span style="font-size:12px;color:#6b7280;font-weight:600;margin-left:12px;">指标:</span>
+          <select id="cross-metric-select" onchange="renderCrossAnalysis()" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+            <option value="count">关键词数量</option>
+            <option value="cost">花费</option>
+            <option value="impression">曝光量</option>
+            <option value="click">点击量</option>
+            <option value="ctr">CTR</option>
+            <option value="cpc">CPC</option>
+
+            <option value="appInteractCost">📱 APP互动成本</option>
+            <option value="appOpenCost">📲 APP打开成本</option>
+            <option value="appOrderCost">🛒 APP订单成本</option>
+          </select>
+          <button onclick="clearCrossFilters()" style="padding:4px 12px;border:1px solid #d1d5db;border-radius:6px;background:white;font-size:12px;cursor:pointer;">🗑 清除筛选</button>
+        </div>
+      </div>
+      
+      <!-- 数据概览卡片 -->
+      <div id="cross-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
+      
+      <!-- 图表区域 -->
+      <div class="charts-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="chart-card">
+          <h3 id="cross-chart-l1-title" style="font-size:14px;margin-bottom:12px;">📊 业务线维度</h3>
+          <div class="chart-wrap" style="height:260px;"><canvas id="chart-cross-l1"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3 style="font-size:14px;margin-bottom:12px;">📊 词包维度</h3>
+          <div class="chart-wrap" style="height:260px;"><canvas id="chart-cross-l2"></canvas></div>
+        </div>
+      </div>
+      
+      <!-- 热力图 -->
+      <div class="chart-card" style="margin-top:16px;">
+        <h3 style="font-size:14px;margin-bottom:12px;">🔥 交叉热力图</h3>
+        <div id="cross-heatmap" style="overflow-x:auto;"></div>
+      </div>
+      
+      <!-- 详细表格 -->
+      <div class="card" style="margin-top:16px;padding:16px;">
+        <h3 style="font-size:14px;margin-bottom:12px;">📋 详细数据</h3>
+        <div class="tbl-wrap">
+          <table id="table-cross-detail">
+            <thead>
+              <tr id="cross-detail-header">
+                <th>业务线</th>
+                <th>词包</th>
+                <th>关键词数</th>
+                <th>花费</th>
+                <th>曝光</th>
+                <th>点击</th>
+                <th>CTR</th>
+                <th>CPC</th>
+                <th>APP互动成本</th>
+                <th>APP打开成本</th>
+                <th>APP订单成本</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关键词词云 -->
+    <div class="card mb-4" id="wordcloud-section">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>☁️ 关键词词云</span>
+        <select id="wc-metric-select" onchange="renderWordCloud()" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);background:var(--card);">
+          <option value="cost">按消耗</option>
+          <option value="impression">按展示</option>
+          <option value="click">按点击</option>
+        </select>
+      </div>
+      <div class="filter-row" style="margin-bottom:8px;">
+        <span class="filter-label">业务线:</span>
+        <div class="filter-tags" id="wc-filter-l1"></div>
+        <button class="btn btn-outline" style="padding:3px 10px;font-size:11px;margin-left:8px;" onclick="clearWcFilters()">清除</button>
+      </div>
+      <div class="filter-row" style="margin-bottom:14px;">
+        <span class="filter-label">词包:</span>
+        <div class="filter-tags" id="wc-filter-l2"></div>
+      </div>
+      <div id="wordcloud-wrap" style="position:relative;width:100%;height:380px;border:1px dashed var(--border);border-radius:8px;background:var(--bg);">
+        <canvas id="wordcloud-canvas"></canvas>
+        <div id="wordcloud-tooltip" style="display:none;position:absolute;padding:8px 12px;background:#1f2937;color:#fff;border-radius:8px;font-size:12px;pointer-events:none;z-index:100;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
+      </div>
+      <div id="wc-note" style="display:none;margin-top:6px;font-size:12px;color:#9ca3af;"></div>
+    </div>
+
+    <!-- 明细表格 -->
+    <div class="card mb-4">
+      <div class="card-title">📋 分类明细</div>
+
+      <div class="table-toolbar">
+        <input type="text" class="search-box" id="search-box" placeholder="搜索关键词…" oninput="renderTable(1)">
+        <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="exportCSV()">⬇ 导出 CSV</button>
+      </div>
+      
+      <!-- 筛选器 -->
+      <div class="filter-section" id="filter-section">
+        <div class="filter-section-title">🔍 筛选器</div>
+        <div class="filter-row">
+          <span class="filter-label">一级分类:</span>
+          <div class="filter-tags" id="filter-l1-tags"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">二级分类:</span>
+          <div class="filter-tags" id="filter-l2-tags"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">国家:</span>
+          <select class="filter-select" id="filter-country" onchange="renderTable(1)">
+            <option value="">全部国家</option>
+          </select>
+          <span class="filter-label" style="margin-left:12px;">城市:</span>
+          <select class="filter-select" id="filter-city" onchange="renderTable(1)">
+            <option value="">全部城市</option>
+          </select>
+          <span class="filter-label" style="margin-left:12px;">分区:</span>
+          <select class="filter-select" id="filter-zone" onchange="onZoneTierChange()">
+            <option value="">全部分区</option>
+          </select>
+          <span class="filter-label" style="margin-left:12px;">等级:</span>
+          <select class="filter-select" id="filter-tier" onchange="onZoneTierChange()">
+            <option value="">全部等级</option>
+          </select>
+          <span class="filter-label" style="margin-left:12px;">素材业务线:</span>
+          <select class="filter-select" id="filter-ad-biz-line" onchange="renderTable(1)">
+            <option value="">全部</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;" onclick="clearFilters()">🗑 清除筛选</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>关键词</th>
+              <th>一级分类</th>
+              <th>二级分类</th>
+              <th>国家</th>
+              <th>城市</th>
+              <th>分区</th>
+              <th>等级</th>
+              <th>素材业务线</th>
+              <th>花费</th>
+              <th>曝光</th>
+              <th>点击</th>
+              <th>CTR</th>
+              <th>CPC</th>
+              <th>APP互动成本</th>
+              <th>APP打开成本</th>
+              <th>APP订单成本</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- 地理维度分析板块 -->
+    <div class="card mb-4 hidden" id="geo-analysis-section">
+      <div class="card-title">🌍 地理维度分析</div>
+
+      <!-- 业务线筛选 -->
+      <div class="geo-filter-row">
+        <span class="filter-label">业务线:</span>
+        <div class="filter-tags" id="geo-filter-l1"></div>
+      </div>
+
+      <!-- 指标切换 -->
+      <div class="geo-filter-row">
+        <span class="filter-label">指标:</span>
+        <select id="geo-metric-select" onchange="renderGeoAnalysis()">
+          <option value="cost">💰 消耗</option>
+          <option value="impression">👁 展示</option>
+          <option value="click">🖱 点击</option>
+        </select>
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="geo-charts-grid geo-pie-row">
+        <div class="geo-chart-card">
+          <h3>🌏 国家分布</h3>
+          <div class="chart-wrap"><canvas id="chart-geo-country"></canvas></div>
+        </div>
+        <div class="geo-chart-card">
+          <h3>📍 区域分布</h3>
+          <div class="chart-wrap"><canvas id="chart-geo-region"></canvas></div>
+        </div>
+        <div class="geo-chart-card">
+          <h3>🏙 城市等级分布</h3>
+          <div class="chart-wrap"><canvas id="chart-geo-tier"></canvas></div>
+        </div>
+      </div>
+      <div class="geo-charts-grid geo-bar-row" style="margin-top:16px;">
+        <div class="geo-chart-card">
+          <h3>🏢 城市 TOP50</h3>
+          <div class="chart-wrap"><canvas id="chart-geo-city"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div>分类中…</div>
+</div>
+
+<!-- 分类引擎 -->
+<script src="js/dicts.js"></script>
+<script src="js/classify.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

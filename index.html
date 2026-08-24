@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小红书投放工具箱</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- 顶部 Header -->
+    <header class="app-header">
+      <div class="header-inner">
+        <h1 class="app-title">小红书<span class="accent">投放工具箱</span></h1>
+        <p class="app-subtitle">关键词分类 · 链接生成 · 返货监控 — 一站式投放效率工具</p>
+      </div>
+    </header>
+
+    <!-- 顶部导航 Tab（横向排列） -->
+    <nav class="tab-nav" role="tablist" aria-label="工具箱导航">
+        <button type="button" class="tab-btn" id="tab-classifier" role="tab"
+                aria-controls="tool-panel" aria-selected="false" data-tool="classifier">🔍 关键词分类</button>
+        <button type="button" class="tab-btn" id="tab-generator" role="tab"
+                aria-controls="tool-panel" aria-selected="false" data-tool="generator">🔗 链接生成</button>
+        <button type="button" class="tab-btn" id="tab-rebate" role="tab"
+                aria-controls="tool-panel" aria-selected="false" data-tool="rebate">📊 返货监控</button>
+      </nav>
+
+      <!-- 内容区：iframe 加载当前选中的工具 -->
+      <main class="app-main" role="tabpanel" id="tool-panel" aria-label="工具内容">
+        <iframe id="tool-frame" class="tool-frame"
+                title="工具内容"
+                src="keyword-classifier/index.html"></iframe>
+      </main>
+
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /**
+       * URL hash 路由：切换 Tab 更新 hash，刷新后保持上次选中的工具。
+       *   #classifier -> keyword-classifier/index.html
+       *   #generator  -> xhs-link-generator3/index.html
+       *   #rebate     -> rebate-monitor/index.html
+       */
+      var TOOLS = {
+        classifier: 'keyword-classifier/index.html',
+        generator: 'xhs-link-generator3/index.html',
+        rebate: 'rebate-monitor/index.html'
+      };
+      var DEFAULT_TOOL = 'classifier';
+
+      var frame = document.getElementById('tool-frame');
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
+
+      /** 从当前 URL hash 解析工具名，非法或缺失时回退到默认工具。 */
+      function parseTool() {
+        var hash = window.location.hash.replace(/^#\/?/, '');
+        return Object.prototype.hasOwnProperty.call(TOOLS, hash) ? hash : DEFAULT_TOOL;
+      }
+
+      /** 激活指定工具：更新 Tab 激活态 + 切换 iframe 地址（src 未变化时不重载）。 */
+      function activate(tool) {
+        var src = TOOLS[tool];
+        if (!src) {
+          return;
+        }
+        tabs.forEach(function (btn) {
+          var isActive = btn.getAttribute('data-tool') === tool;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        if (frame.getAttribute('src') !== src) {
+          frame.src = src;
+        }
+      }
+
+      /** 将工具名同步写入 URL hash（值不变时不写入，避免无谓的 hashchange）。 */
+      function syncHash(tool) {
+        var target = '#' + tool;
+        if (window.location.hash !== target) {
+          window.location.hash = target;
+        }
+      }
+
+      // Tab 点击：激活工具 + 更新 hash（hash 变化会再次触发 activate，幂等无害）
+      tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tool = btn.getAttribute('data-tool');
+          if (tool && Object.prototype.hasOwnProperty.call(TOOLS, tool)) {
+            activate(tool);
+            syncHash(tool);
+          }
+        });
+      });
+
+      // hashchange：支持浏览器前进/后退、手动改 hash；非法 hash 立即归一化 URL
+      window.addEventListener('hashchange', function () {
+        var tool = parseTool();
+        activate(tool);
+        if (window.location.hash !== '#' + tool) {
+          history.replaceState(null, '', '#' + tool);
+        }
+      });
+
+      // 初始化：无 hash 或 hash 非法时，用 replaceState 归一化到当前工具
+      // （不产生多余历史记录），随后激活对应工具；刷新页面保持上次选中。
+      var initial = parseTool();
+      if (window.location.hash !== '#' + initial) {
+        history.replaceState(null, '', '#' + initial);
+      }
+      activate(initial);
+    })();
+  </script>
+</body>
+</html>
