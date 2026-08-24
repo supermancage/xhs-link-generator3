@@ -27,6 +27,10 @@ const L2_COLORS = KC.UI.L2_COLORS;
 const PAGE_SIZE = 50;
 KC.UI.PAGE_SIZE = PAGE_SIZE;
 
+// ── 输入上限（防止超大文件/超长文本导致页面卡死）──
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_ROWS = 50000;                 // 有效行数上限
+
 let allResults = [];
 let filteredResults = [];
 let currentPage = 1;
@@ -91,14 +95,17 @@ async function runClassify() {
       const text = document.getElementById('kw-text').value.trim();
       if (!text) { showLoading(false); alert('请输入关键词'); return; }
       raw = text.split('\n').map(s => s.trim()).filter(Boolean);
+      if (raw.length > MAX_ROWS) { showLoading(false); alert('关键词数量超过 ' + MAX_ROWS + ' 行上限，请拆分后重试'); return; }
     } else {
       if (typeof XLSX === 'undefined') { showLoading(false); alert('Excel 解析库未加载，请刷新页面重试或使用粘贴模式'); return; }
       const file = document.getElementById('file-input').files[0];
       if (!file) { showLoading(false); alert('请先上传文件'); return; }
+      if (file.size > MAX_FILE_SIZE) { showLoading(false); alert('文件大小超过 ' + (MAX_FILE_SIZE / 1024 / 1024) + 'MB 上限，请拆分后重试'); return; }
       const ab = await file.arrayBuffer();
       const data = new Uint8Array(ab);
       const wb = XLSX.read(data, { type: 'array', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
+      if (!ws || !ws['!ref']) { showLoading(false); alert('Excel 表格为空或格式不支持'); return; }
       const col = parseInt(document.getElementById('col-kw').value) || 1;
       const colCost = parseInt(document.getElementById('col-cost').value) || 0;
       const colImp = parseInt(document.getElementById('col-impression').value) || 0;
@@ -109,6 +116,7 @@ async function runClassify() {
       const colAdBizLine = parseInt(document.getElementById('col-ad-biz-line').value) || 0;
       const rowStart = parseInt(document.getElementById('row-start').value) || 1;
       const range = XLSX.utils.decode_range(ws['!ref']);
+      if (range.e.r - range.s.r + 1 > MAX_ROWS) { showLoading(false); alert('有效行数超过 ' + MAX_ROWS + ' 行上限，请拆分后重试'); return; }
       for (let r = range.s.r + rowStart - 1; r <= range.e.r; r++) {
         const cell = ws[XLSX.utils.encode_cell({ r, c: col - 1 })];
         const val = cell ? (typeof cell.v === 'number' ? String(cell.v) : String(cell.v || '')) : '';
@@ -189,7 +197,7 @@ function initFilters() {
   const l1Tags = document.getElementById('filter-l1-tags');
   const l1s = [...new Set(allResults.map(r => r.l1).filter(Boolean))].sort();
   l1Tags.innerHTML = '<span class="filter-tag active" data-value="" onclick="selectFilter(this, \'l1\')">全部</span>' +
-    l1s.map(l1 => `<span class="filter-tag" data-value="${l1}" onclick="selectFilter(this, 'l1')">${l1}</span>`).join('');
+    l1s.map(l1 => `<span class="filter-tag" data-value="${escHtml(l1)}" onclick="selectFilter(this, 'l1')">${escHtml(l1)}</span>`).join('');
 
   // 二级分类筛选器 - 初始显示全部
   updateL2FilterTags('');
@@ -198,7 +206,7 @@ function initFilters() {
   const countrySelect = document.getElementById('filter-country');
   const countries = [...new Set(allResults.map(r => r.country).filter(Boolean))].sort();
   countrySelect.innerHTML = '<option value="">全部国家</option>' +
-    countries.map(c => `<option value="${c}">${c}</option>`).join('');
+    countries.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
 
   // 城市下拉（级联：受分区/等级控制）
   updateCityDropdown();
@@ -207,13 +215,13 @@ function initFilters() {
   const zoneSelect = document.getElementById('filter-zone');
   const zones = [...new Set(allResults.map(r => r.zone).filter(Boolean))].sort();
   zoneSelect.innerHTML = '<option value="">全部分区</option>' +
-    zones.map(z => `<option value="${z}">${z}</option>`).join('');
+    zones.map(z => `<option value="${escHtml(z)}">${escHtml(z)}</option>`).join('');
 
   // 等级下拉
   const tierSelect = document.getElementById('filter-tier');
   const tiers = [...new Set(allResults.map(r => r.tier).filter(Boolean))].sort();
   tierSelect.innerHTML = '<option value="">全部等级</option>' +
-    tiers.map(t => `<option value="${t}">${t}</option>`).join('');
+    tiers.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
 
   // 投放素材业务线下拉
   const adBizSelect = document.getElementById('filter-ad-biz-line');
@@ -236,7 +244,7 @@ function updateL2FilterTags(selectedL1) {
   }
   
   l2Tags.innerHTML = '<span class="filter-tag active" data-value="" onclick="selectFilter(this, \'l2\')">全部</span>' +
-    l2s.map(l2 => `<span class="filter-tag" data-value="${l2}" onclick="selectFilter(this, 'l2')">${l2}</span>`).join('');
+    l2s.map(l2 => `<span class="filter-tag" data-value="${escHtml(l2)}" onclick="selectFilter(this, 'l2')">${escHtml(l2)}</span>`).join('');
 }
 
 // 根据分区/等级筛选更新城市下拉
@@ -250,7 +258,7 @@ function updateCityDropdown() {
   const citySelect = document.getElementById('filter-city');
   const prevCity = citySelect?.value || '';
   citySelect.innerHTML = '<option value="">全部城市</option>' +
-    cities.map(c => `<option value="${c}">${c}</option>`).join('');
+    cities.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
   // 恢复之前选中（如果还在列表中）
   if (prevCity && cities.includes(prevCity)) citySelect.value = prevCity;
 }
@@ -571,12 +579,12 @@ function renderTable(page) {
     return `<tr>
       <td class="num" style="color:#9ca3af">${start + i + 1}</td>
       <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.kw)}">${escHtml(r.kw)}</td>
-      <td><span class="l1-badge ${l1Meta.cls}">${r.l1}</span></td>
-      <td><span class="l2-tag">${r.l2}</span></td>
-      <td style="color:#6366f1;font-weight:500">${r.country||'-'}</td>
-      <td style="color:#059669;font-weight:500">${r.city||'-'}</td>
-      <td style="color:#6366f1;font-weight:500">${r.zone||'-'}</td>
-      <td style="color:#f59e0b;font-weight:500">${r.tier||'-'}</td>
+      <td><span class="l1-badge ${l1Meta.cls}">${escHtml(r.l1 || '')}</span></td>
+      <td><span class="l2-tag">${escHtml(r.l2 || '')}</span></td>
+      <td style="color:#6366f1;font-weight:500">${escHtml(r.country || '-')}</td>
+      <td style="color:#059669;font-weight:500">${escHtml(r.city || '-')}</td>
+      <td style="color:#6366f1;font-weight:500">${escHtml(r.zone || '-')}</td>
+      <td style="color:#f59e0b;font-weight:500">${escHtml(r.tier || '-')}</td>
       <td>${r.adBizLine ? `<span class="l1-badge adbiz-badge">${escHtml(r.adBizLine)}</span>` : '<span style="color:#9ca3af">-</span>'}</td>
       <td class="num" style="color:#ef4444">${r.cost ? '¥' + r.cost.toLocaleString() : '-'}</td>
       <td class="num" style="color:#3b82f6">${r.impression ? r.impression.toLocaleString() : '-'}</td>
@@ -609,7 +617,7 @@ function renderTable(page) {
 }
 
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function exportCSV() {
@@ -1133,7 +1141,7 @@ function initGeoFilters() {
 
   var container = document.getElementById('geo-filter-l1');
   container.innerHTML = [...l1Set].sort().map(function(l1) {
-    return '<span class="filter-tag active" data-l1="' + l1 + '" onclick="toggleGeoL1(this)">' + l1 + '</span>';
+    return '<span class="filter-tag active" data-l1="' + escHtml(l1) + '" onclick="toggleGeoL1(this)">' + escHtml(l1) + '</span>';
   }).join('');
 }
 
@@ -1417,8 +1425,13 @@ document.getElementById('file-input').addEventListener('change', function() {
     const dropzone = document.getElementById('dropzone');
     dropzone.classList.add('has-file');
     document.getElementById('filename-display').textContent = '✅ ' + f.name + '（' + sizeStr + '）';
-    // 操作栏显示醒目标记
-    document.getElementById('file-info').innerHTML = '<span class="file-info-badge">📁 ' + f.name + '（' + sizeStr + '）</span>';
+    // 操作栏显示醒目标记（文件名可能含特殊字符，用 textContent 防注入）
+    const fileInfoEl = document.getElementById('file-info');
+    fileInfoEl.textContent = '';
+    const fileInfoBadge = document.createElement('span');
+    fileInfoBadge.className = 'file-info-badge';
+    fileInfoBadge.textContent = '📁 ' + f.name + '（' + sizeStr + '）';
+    fileInfoEl.appendChild(fileInfoBadge);
   }
 });
 
@@ -1470,7 +1483,7 @@ function initCrossFilters() {
   // 渲染业务线筛选器
   const l1Container = document.getElementById('cross-filter-l1');
   l1Container.innerHTML = [...l1Set].sort().map(l1 =>
-    `<span class="filter-tag active" data-l1="${l1}" onclick="toggleCrossL1(this)">${l1}</span>`
+    `<span class="filter-tag active" data-l1="${escHtml(l1)}" onclick="toggleCrossL1(this)">${escHtml(l1)}</span>`
   ).join('');
 
   // 渲染投放素材业务线筛选器
@@ -1482,7 +1495,7 @@ function initCrossFilters() {
   // 渲染词包筛选器
   const l2Container = document.getElementById('cross-filter-l2');
   l2Container.innerHTML = [...l2Set].sort().map(l2 =>
-    `<span class="filter-tag active" data-l2="${l2}" onclick="toggleCrossL2(this)">${l2}</span>`
+    `<span class="filter-tag active" data-l2="${escHtml(l2)}" onclick="toggleCrossL2(this)">${escHtml(l2)}</span>`
   ).join('');
 }
 
@@ -1548,7 +1561,7 @@ function updateCrossL2Tags() {
   // 重新渲染词包标签，默认全选可用词包
   crossSelectedL2 = new Set(availableL2s);
   l2Container.innerHTML = [...availableL2s].sort().map(l2 =>
-    `<span class="filter-tag active" data-l2="${l2}" onclick="toggleCrossL2(this)">${l2}</span>`
+    `<span class="filter-tag active" data-l2="${escHtml(l2)}" onclick="toggleCrossL2(this)">${escHtml(l2)}</span>`
   ).join('') || '<span style="color:#9ca3af;font-size:12px;">（当前维度下无词包）</span>';
 }
 
@@ -1924,7 +1937,7 @@ function renderCrossHeatmap(dimVals, l2s, matrix, metricField) {
     const colTotal = l2Totals[l2] || 0;
     const colPct = grandTotal > 0 ? (colTotal / grandTotal * 100).toFixed(1) : 0;
     html += `<th style="background:#f9fafb;padding:8px;border:1px solid #e5e7eb;text-align:center;font-size:11px;">
-      <div>${l2}</div>
+      <div>${escHtml(l2)}</div>
       <div style="font-size:10px;color:#6b7280;font-weight:normal;">${formatMetricValue(colTotal, metricField)}</div>
       <div style="font-size:10px;color:#1a73e8;font-weight:normal;">${colPct}%</div>
     </th>`;
@@ -1960,7 +1973,7 @@ function renderCrossHeatmap(dimVals, l2s, matrix, metricField) {
       html += `<td style="padding:8px;border:1px solid #e5e7eb;text-align:center;background:${color};cursor:pointer;transition:all .15s;"
         onmouseover="this.style.transform='scale(1.05)';this.style.zIndex='10';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';this.style.position='relative'"
         onmouseout="this.style.transform='';this.style.zIndex='';this.style.boxShadow=''"
-        title="${dv} × ${l2}: ${formatMetricValue(value, metricField)} (${pct}% of total)"
+        title="${escHtml(dv)} × ${escHtml(l2)}: ${formatMetricValue(value, metricField)} (${pct}% of total)"
       >
         <div style="font-weight:600;font-size:13px;">${formatMetricValue(value, metricField)}</div>
         <div style="font-size:10px;color:#374151;margin-top:2px;">${pct}%</div>
@@ -2041,7 +2054,7 @@ function renderCrossDetailTable(metrics) {
     return `
     <tr>
       <td>${renderCrossDimBadge(m.dimVal)}</td>
-      <td><span class="l2-tag">${m.l2}</span></td>
+      <td><span class="l2-tag">${escHtml(m.l2 || '')}</span></td>
       <td class="num">${m.count.toLocaleString()}</td>
       <td class="num" style="color:#ef4444">
         ¥${m.cost.toLocaleString()}
@@ -2143,7 +2156,7 @@ function initWcFilters() {
 
   const l1Container = document.getElementById('wc-filter-l1');
   l1Container.innerHTML = [...l1Set].sort().map(l1 =>
-    `<span class="filter-tag active" data-l1="${l1}" onclick="toggleWcL1(this)">${l1}</span>`
+    `<span class="filter-tag active" data-l1="${escHtml(l1)}" onclick="toggleWcL1(this)">${escHtml(l1)}</span>`
   ).join('');
 
   updateWcL2Tags();
@@ -2181,7 +2194,7 @@ function updateWcL2Tags() {
   wcSelectedL2 = new Set(availableL2s);
   const l2Container = document.getElementById('wc-filter-l2');
   l2Container.innerHTML = [...availableL2s].sort().map(l2 =>
-    `<span class="filter-tag active" data-l2="${l2}" onclick="toggleWcL2(this)">${l2}</span>`
+    `<span class="filter-tag active" data-l2="${escHtml(l2)}" onclick="toggleWcL2(this)">${escHtml(l2)}</span>`
   ).join('') || '<span style="color:#9ca3af;font-size:12px;">（当前业务线下无词包）</span>';
 }
 
@@ -2318,7 +2331,7 @@ function renderWordCloud() {
         if (item) {
           const wcItem = wcData.find(d => d[0] === item[0]);
           if (wcItem) {
-            tooltip.innerHTML = `<b>${wcItem[0]}</b><br><span style="opacity:.7">${wcItem[3]} · ${wcItem[4]}</span><br>${metricLabel}: ${Number(wcItem[5]).toLocaleString()}`;
+            tooltip.innerHTML = `<b>${escHtml(wcItem[0])}</b><br><span style="opacity:.7">${escHtml(wcItem[3] || '')} · ${escHtml(wcItem[4] || '')}</span><br>${escHtml(metricLabel)}: ${Number(wcItem[5]).toLocaleString()}`;
             tooltip.style.display = 'block';
             tooltip.style.left = (event.offsetX + 12) + 'px';
             tooltip.style.top = (event.offsetY - 50) + 'px';

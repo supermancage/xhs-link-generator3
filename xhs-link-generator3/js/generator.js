@@ -1,7 +1,7 @@
 /**
- * LinkGenCore \u2014 \u94fe\u63a5\u751f\u6210\u6838\u5fc3\u903b\u8f91\u6a21\u5757
- * \u5bfc\u51fa\u5168\u5c40 LinkGenCore \u5bf9\u8c61
- * \u4f9d\u8d56\uff1aLinkGenConfig\uff08\u9700\u5148\u52a0\u8f7d js/config.js\uff09
+ * LinkGenCore — 链接生成核心逻辑模块
+ * 导出全局 LinkGenCore 对象
+ * 依赖：LinkGenConfig（需先加载 js/config.js）
  */
 (function (global) {
     "use strict";
@@ -10,10 +10,10 @@
     var withPlaceholders = global.LinkGenConfig.withPlaceholders;
 
     /**
-     * \u6784\u5efa\u56db\u79cd\u94fe\u63a5\uff1aDP\u94fe\u63a5\u3001Universal Link\u3001\u515c\u5e95\u94fe\u63a5\u3001\u76d1\u6d4b\u94fe\u63a5
+     * 构建四种链接：DP链接、Universal Link、兜底链接、监测链接
      * @param {Object} payload
-     * @param {string} payload.appLink - \u6295\u653e\u94fe\u63a5\uff08\u5df2 trim\uff09
-     * @param {string} payload.refid - refid\uff08\u5df2 trim\uff09
+     * @param {string} payload.appLink - 投放链接（已 trim）
+     * @param {string} payload.refid - refid（已 trim）
      * @returns {{ dpLink: string, ulLink: string, fallbackLink: string, trackLink: string }}
      */
     function buildLinks(payload) {
@@ -29,36 +29,36 @@
     }
 
     /**
-     * \u6821\u9a8c\u5fc5\u586b\u5b57\u6bb5
+     * 校验必填字段
      * @param {Object} payload
-     * @param {string} payload.appLink - \u6295\u653e\u94fe\u63a5
+     * @param {string} payload.appLink - 投放链接
      * @param {string} payload.refid - refid
-     * @param {string} [payload.noteId=""] - \u7b14\u8bb0 ID
-     * @param {string} lineLabel - \u7528\u4e8e\u9519\u8bef\u63d0\u793a\u7684\u884c\u6807\u8bc6\uff08\u5982 "\u7b2c5\u884c" \u6216 "\u5f53\u524d\u8f93\u5165"\uff09
-     * @throws {Error} \u6821\u9a8c\u4e0d\u901a\u8fc7\u65f6\u629b\u51fa
+     * @param {string} [payload.noteId=""] - 笔记 ID
+     * @param {string} lineLabel - 用于错误提示的行标识（如 "第5行" 或 "当前输入"）
+     * @throws {Error} 校验不通过时抛出
      */
     function validateRequiredFields(payload, lineLabel) {
-        // \u524d\u540e\u7a7a\u683c\u68c0\u67e5
+        // 前后空格检查
         if (payload.appLink !== payload.appLink.trim() ||
             payload.refid !== payload.refid.trim() ||
             (payload.noteId && payload.noteId !== payload.noteId.trim())) {
-            throw new Error(lineLabel + " \u5b58\u5728\u524d\u540e\u7a7a\u683c\uff0c\u8bf7\u5220\u9664\u540e\u91cd\u8bd5");
+            throw new Error(lineLabel + " 存在前后空格，请删除后重试");
         }
 
-        // \u7a7a\u503c\u68c0\u67e5
+        // 空值检查
         if (!payload.appLink.trim() || !payload.refid.trim()) {
-            throw new Error(lineLabel + " \u7684\u6295\u653e\u94fe\u63a5\u548c refid \u4e0d\u80fd\u4e3a\u7a7a");
+            throw new Error(lineLabel + " 的投放链接和 refid 不能为空");
         }
 
-        // appLink URL \u5408\u6cd5\u6027\u6821\u9a8c \u2014\u2014 \u5fc5\u987b\u4ee5 http:// \u6216 https:// \u5f00\u5934
+        // appLink URL 合法性校验 —— 必须以 http:// 或 https:// 开头
         var trimmed = payload.appLink.trim();
         if (trimmed.indexOf("http://") !== 0 && trimmed.indexOf("https://") !== 0) {
-            throw new Error(lineLabel + " \u7684\u6295\u653e\u94fe\u63a5\u5fc5\u987b\u4ee5 http:// \u6216 https:// \u5f00\u5934");
+            throw new Error(lineLabel + " 的投放链接必须以 http:// 或 https:// 开头");
         }
     }
 
     /**
-     * CSV \u503c\u8f6c\u4e49
+     * CSV 值转义
      * @param {*} value
      * @returns {string}
      */
@@ -71,9 +71,9 @@
     }
 
     /**
-     * \u89e3\u6790\u5355\u884c CSV\uff08\u652f\u6301\u5f15\u53f7\u5305\u88f9\u7684\u5b57\u6bb5\uff09
-     * @param {string} line - CSV \u884c\u6587\u672c
-     * @returns {string[]} \u5b57\u6bb5\u6570\u7ec4\uff08\u5df2 trim\uff09
+     * 解析单行 CSV（支持引号包裹的字段）
+     * @param {string} line - CSV 行文本
+     * @returns {string[]} 字段数组（已 trim）
      */
     function parseCsvLine(line) {
         var fields = [];
@@ -106,20 +106,20 @@
     }
 
     /**
-     * \u89e3\u6790\u6279\u91cf\u8f93\u5165\u7684\u5355\u884c\uff08\u652f\u6301 CSV \u6216\u7a7a\u683c\u5206\u9694\u683c\u5f0f\uff09
-     * @param {string} line - \u884c\u6587\u672c
-     * @param {number} index - \u884c\u7d22\u5f15
+     * 解析批量输入的单行（支持 CSV 或空格分隔格式）
+     * @param {string} line - 行文本
+     * @param {number} index - 行索引
      * @returns {{ noteId: string, appLink: string, refid: string, lineLabel: string }}
-     * @throws {Error} \u683c\u5f0f\u4e0d\u6b63\u786e\u65f6\u629b\u51fa
+     * @throws {Error} 格式不正确时抛出
      */
     function parseBatchLine(line, index) {
-        var lineLabel = "\u7b2c " + (index + 1) + " \u884c";
+        var lineLabel = "第 " + (index + 1) + " 行";
 
-        // CSV \u683c\u5f0f\uff08\u542b\u9017\u53f7\uff09
+        // CSV 格式（含逗号）
         if (line.includes(",")) {
             var parts = parseCsvLine(line);
 
-            // URL\u53c2\u6570\u542b\u9017\u53f7\u65f6\u81ea\u52a8\u5408\u5e76
+            // URL参数含逗号时自动合并
             if (parts.length > 1 && (parts[1].indexOf("http://") === 0 || parts[1].indexOf("https://") === 0)) {
                 var expectedCols = (parts.length >= 10) ? 10 : 3;
                 if (parts.length > expectedCols) {
@@ -129,7 +129,7 @@
                 }
             }
 
-            // \u65b0\u683c\u5f0f\uff1a\u542b\u547d\u540d\u5b57\u6bb5\uff08\u226510\u5217\uff09
+            // 新格式：含命名字段（\u226510列）
             if (parts.length >= 10) {
                 return {
                     noteId: parts[0],
@@ -146,7 +146,7 @@
                 };
             }
 
-            // \u65e7\u683c\u5f0f\uff1a\u4ec5\u94fe\u63a5\uff08\u22653\u5217\uff09
+            // 旧格式：仅链接（\u22653列）
             if (parts.length >= 3) {
                 return {
                     noteId: parts[0],
@@ -163,10 +163,10 @@
                 };
             }
 
-            throw new Error(lineLabel + " \u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u9700\u8981 `\u7b14\u8bb0ID,\u6295\u653e\u94fe\u63a5,refid` \u6216\u542b\u547d\u540d\u5b57\u6bb5\u7684\u5b8c\u6574\u683c\u5f0f");
+            throw new Error(lineLabel + " 格式不正确，需要 `笔记ID,投放链接,refid` 或含命名字段的完整格式");
         }
 
-        // \u7a7a\u683c\u5206\u9694\u683c\u5f0f\uff08\u4fdd\u6301\u65e7\u6709\u903b\u8f91\uff09
+        // 空格分隔格式（保持旧有逻辑）
         var spaceParts = line.split(/\s+/).filter(Boolean);
         if (spaceParts.length === 3) {
             return {
@@ -200,12 +200,12 @@
             };
         }
 
-        throw new Error(lineLabel + " \u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u9700\u8981 `\u7b14\u8bb0ID \u6295\u653e\u94fe\u63a5 refid` \u6216 `\u6295\u653e\u94fe\u63a5 refid`");
+        throw new Error(lineLabel + " 格式不正确，需要 `笔记ID 投放链接 refid` 或 `投放链接 refid`");
     }
 
     /**
-     * \u5904\u7406\u6279\u91cf\u8f93\u5165\u6587\u672c\uff0c\u9010\u884c\u5bb9\u9519
-     * @param {string} inputText - \u6279\u91cf\u8f93\u5165\u7684\u539f\u59cb\u6587\u672c
+     * 处理批量输入文本，逐行容错
+     * @param {string} inputText - 批量输入的原始文本
      * @returns {{
      *   csvText: string,
      *   previewRows: string[][],
@@ -219,22 +219,22 @@
         });
 
         if (!lines.length) {
-            throw new Error("\u6587\u4ef6\u5185\u5bb9\u4e3a\u7a7a\uff0c\u8bf7\u68c0\u67e5\u540e\u91cd\u8bd5");
+            throw new Error("文件内容为空，请检查后重试");
         }
 
         var previewRows = [];
         var results = [];
         var errors = [];
-        var headers = ["\u7b14\u8bb0ID", "\u6295\u653e\u94fe\u63a5", "refid",
-            "\u7d20\u6750\u7c7b\u578b", "\u4e1a\u52a1\u7ebf", "\u5185\u5bb9\u7c7b\u578b",
-            "\u9152\u5e97\u57ce\u5e02", "\u9152\u5e97\u540d\u79f0", "\u6295\u653e\u6d3b\u52a8", "\u5b9a\u5411",
-            "\u5e7f\u544a\u8ba1\u5212\u547d\u540d",
-            "DP\u94fe\u63a5", "Universal Link", "\u515c\u5e95\u94fe\u63a5", "\u76d1\u6d4b\u94fe\u63a5"];
+        var headers = ["笔记ID", "投放链接", "refid",
+            "素材类型", "业务线", "内容类型",
+            "酒店城市", "酒店名称", "投放活动", "定向",
+            "广告计划命名",
+            "DP链接", "Universal Link", "兜底链接", "监测链接"];
         results.push(headers.join(","));
         previewRows.push(headers);
 
         var firstLine = lines[0].toLowerCase();
-        var startIndex = (firstLine.includes("\u7b14\u8bb0id") || firstLine.includes("noteid")) ? 1 : 0;
+        var startIndex = (firstLine.includes("笔记id") || firstLine.includes("noteid")) ? 1 : 0;
 
         for (var i = startIndex; i < lines.length; i += 1) {
             try {
@@ -245,7 +245,7 @@
                     refid: item.refid.trim()
                 });
 
-                // \u751f\u6210\u547d\u540d
+                // 生成命名
                 var naming = "";
                 if (item.materialType) {
                     naming = global.LinkGenNaming.buildNaming({
@@ -296,7 +296,7 @@
                     built.trackLink
                 ]);
             } catch (lineErr) {
-                // \u9010\u884c\u5bb9\u9519\uff1a\u8bb0\u5f55\u9519\u8bef\uff0c\u7ee7\u7eed\u5904\u7406\u540e\u7eed\u884c
+                // 逐行容错：记录错误，继续处理后续行
                 errors.push({
                     line: i + 1,
                     message: lineErr.message

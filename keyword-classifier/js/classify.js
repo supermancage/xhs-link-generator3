@@ -235,6 +235,7 @@ KC.Classifier = {};
   }
   // 规则5b：连锁酒店品牌 → 国内酒店
   // （优先于机票/火车票规则，避免 如家会员 等被 FLIGHT_BUSINESS_TERMS 误归机票）
+  // TODO(业务确认): 连锁品牌需结合 isIntl 判断国际酒店
   else if (hasAny(kw, L1.HOTEL_CHAINS)) {
   l1 = '国内酒店'; l2 = '连锁酒店词';
   }

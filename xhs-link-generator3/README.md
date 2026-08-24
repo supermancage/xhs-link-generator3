@@ -6,6 +6,9 @@
 
 🔗 [https://supermancage.github.io/xhs-link-generator3/](https://supermancage.github.io/xhs-link-generator3/)
 
+> 说明：该地址现已整合为「小红书投放工具箱」入口壳页面（关键词分类 / 链接生成 / 返货监控），
+> 通过顶部 Tab 切换工具，本工具位于「🔗 链接生成」Tab。
+
 ---
 
 ## 功能说明
@@ -46,5 +49,8 @@ xhs-link-generator3/
 
 ## 技术栈
 
-- **纯 HTML / CSS / JavaScript**，无任何第三方依赖
+- **HTML / CSS / JavaScript**（原生实现，无构建步骤）
+- 依赖两个第三方 CDN 库，**使用需联网**：
+  - **SheetJS**（`xlsx-0.20.3`，来源：<https://cdn.sheetjs.com>）—— Excel 读写支持
+  - **qrcode-generator**（`1.4.4`，来源：<https://cdn.jsdelivr.net>）—— 二维码生成
 - 部署于 GitHub Pages，开箱即用

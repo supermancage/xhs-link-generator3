@@ -1,12 +1,12 @@
 /**
- * LinkGenNaming \u2014 \u5e7f\u544a\u8ba1\u5212\u547d\u540d\u6a21\u5757
- * \u5bfc\u51fa\u5168\u5c40 LinkGenNaming \u5bf9\u8c61
+ * LinkGenNaming — 广告计划命名模块
+ * 导出全局 LinkGenNaming 对象
  */
 (function (global) {
     "use strict";
 
     /**
-     * \u83b7\u53d6\u5f53\u5929\u65e5\u671f YYYYMMDD
+     * 获取当天日期 YYYYMMDD
      * @returns {string}
      */
     function getTodayDate() {
@@ -18,8 +18,8 @@
     }
 
     /**
-     * \u83b7\u53d6\u7b14\u8bb0ID\u540e4\u4f4d
-     * \u4e0d\u8db34\u4f4d\u65f6\u7528\u5b9e\u9645\u4f4d\u6570
+     * 获取笔记ID后4位
+     * 不足4位时用实际位数
      * @param {string} noteId
      * @returns {string}
      */
@@ -35,51 +35,51 @@
     }
 
     /**
-     * \u6784\u5efa\u5e7f\u544a\u8ba1\u5212\u547d\u540d
-     * \u683c\u5f0f\uff1a\u4e0a\u7ebf\u65f6\u95f4-\u7d20\u6750\u7c7b\u578b-\u4e1a\u52a1\u7ebf-\u5185\u5bb9\u7c7b\u578b-\u9152\u5e97\u57ce\u5e02/\u76ee\u7684\u5730[-\u9152\u5e97\u540d\u79f0]-\u6295\u653e\u6d3b\u52a8-\u7b14\u8bb0ID\u540e4\u4f4d[-\u5b9a\u5411]
-     * \u4ec5\u5f53\u5185\u5bb9\u7c7b\u578b=\u975e\u6807\u79cd\u8349\u65f6\u62fc\u63a5\u9152\u5e97\u540d\u79f0
-     * \u5b9a\u5411\u4e3a\u7a7a\u65f6\u4e0d\u62fc\u63a5
+     * 构建广告计划命名
+     * 格式：上线时间-素材类型-业务线-内容类型-酒店城市/目的地[-酒店名称]-投放活动-笔记ID后4位[-定向]
+     * 仅当内容类型=非标种草时拼接酒店名称
+     * 定向为空时不拼接
      * @param {Object} params
-     * @param {string} params.materialType - \u7d20\u6750\u7c7b\u578b
-     * @param {string} params.bizLine - \u4e1a\u52a1\u7ebf
-     * @param {string} params.contentType - \u5185\u5bb9\u7c7b\u578b
-     * @param {string} params.city - \u9152\u5e97\u57ce\u5e02/\u76ee\u7684\u5730
-     * @param {string} params.hotelName - \u9152\u5e97\u540d\u79f0
-     * @param {string} params.noteId - \u7b14\u8bb0ID
-     * @param {string} params.activity - \u6295\u653e\u6d3b\u52a8
-     * @param {string} params.targeting - \u5b9a\u5411\uff08\u53ef\u9009\uff09
-     * @returns {string} \u62fc\u63a5\u540e\u7684\u547d\u540d
+     * @param {string} params.materialType - 素材类型
+     * @param {string} params.bizLine - 业务线
+     * @param {string} params.contentType - 内容类型
+     * @param {string} params.city - 酒店城市/目的地
+     * @param {string} params.hotelName - 酒店名称
+     * @param {string} params.noteId - 笔记ID
+     * @param {string} params.activity - 投放活动
+     * @param {string} params.targeting - 定向（可选）
+     * @returns {string} 拼接后的命名
      */
     function buildNaming(params) {
         var segments = [];
 
-        // 1. \u4e0a\u7ebf\u65f6\u95f4
+        // 1. 上线时间
         segments.push(getTodayDate());
 
-        // 2. \u7d20\u6750\u7c7b\u578b
+        // 2. 素材类型
         segments.push(params.materialType || "");
 
-        // 3. \u4e1a\u52a1\u7ebf
+        // 3. 业务线
         segments.push(params.bizLine || "");
 
-        // 4. \u5185\u5bb9\u7c7b\u578b
+        // 4. 内容类型
         segments.push(params.contentType || "");
 
-        // 5. \u9152\u5e97\u57ce\u5e02/\u76ee\u7684\u5730
+        // 5. 酒店城市/目的地
         segments.push(params.city || "");
 
-        // 6. \u9152\u5e97\u540d\u79f0\uff08\u4ec5\u975e\u6807\u79cd\u8349\u65f6\u62fc\u63a5\uff09
-        if (params.contentType === "\u975e\u6807\u79cd\u8349" && params.hotelName && params.hotelName.trim()) {
+        // 6. 酒店名称（仅非标种草时拼接）
+        if (params.contentType === "非标种草" && params.hotelName && params.hotelName.trim()) {
             segments.push(params.hotelName.trim());
         }
 
-        // 7. \u6295\u653e\u6d3b\u52a8
+        // 7. 投放活动
         segments.push(params.activity || "");
 
-        // 8. \u7b14\u8bb0ID\u540e4\u4f4d
+        // 8. 笔记ID后4位
         segments.push(getNoteIdLast4(params.noteId));
 
-        // 9. \u5b9a\u5411\uff08\u53ef\u9009\uff0c\u4e3a\u7a7a\u65f6\u4e0d\u62fc\u63a5\uff09
+        // 9. 定向（可选，为空时不拼接）
         if (params.targeting && params.targeting.trim()) {
             segments.push(params.targeting.trim());
         }

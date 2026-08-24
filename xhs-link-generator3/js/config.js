@@ -1,11 +1,11 @@
 /**
- * LinkGenConfig \u2014 \u914d\u7f6e\u4e0e\u5e38\u91cf\u6a21\u5757
- * \u5bfc\u51fa\u5168\u5c40 LinkGenConfig \u5bf9\u8c61
+ * LinkGenConfig — 配置与常量模块
+ * 导出全局 LinkGenConfig 对象
  */
 (function (global) {
     "use strict";
 
-    /** \u94fe\u63a5\u524d\u7f00\u4e0e\u516c\u5171\u53c2\u6570\u914d\u7f6e */
+    /** 链接前缀与公共参数配置 */
     var config = {
         dpPrefix: "tctclient://web/main?url=",
         ulPrefix: "https://m.17u.cn/app/links/web/main?url=",
@@ -16,7 +16,7 @@
             "https://appnew.ly.com/addap/attribution?aaid=53&os=__OS__&oaidmd5=__OAID_MD5__&caid=__CAID__&caidmd5=__CAID_MD5__&idfamd5=__IDFA__&imeimd5=__IMEI__&ts=__TS__&clickid=__CLICK_ID__&advertiserid=__ADVERTISER_ID__&creativeid=__CREATIVITY_ID__&unitid=__UNIT_ID__&campaignid=__CAMPAIGN_ID__&paid=__PAID__&keyword=__KEYWORD_ID__&noteid=__NOTE_ID__&refid="
     };
 
-    /** \u94fe\u63a5\u6a21\u677f\u4e2d\u7684\u5360\u4f4d\u7b26\u6620\u5c04 */
+    /** 链接模板中的占位符映射 */
     var placeholderParams = {
         CLICK_ID: "__CLICK_ID__",
         XHS_BACK_URL: "__XHS_BACK_URL__",
@@ -31,9 +31,9 @@
     };
 
     /**
-     * \u5c06\u6a21\u677f\u5b57\u7b26\u4e32\u4e2d\u7684\u5360\u4f4d\u7b26\u66ff\u6362\u4e3a\u5b9e\u9645\u503c
-     * @param {string} template - \u542b\u5360\u4f4d\u7b26\u7684\u6a21\u677f\u5b57\u7b26\u4e32
-     * @returns {string} \u66ff\u6362\u540e\u7684\u5b57\u7b26\u4e32
+     * 将模板字符串中的占位符替换为实际值
+     * @param {string} template - 含占位符的模板字符串
+     * @returns {string} 替换后的字符串
      */
     function withPlaceholders(template) {
         return Object.keys(placeholderParams).reduce(function (result, key) {

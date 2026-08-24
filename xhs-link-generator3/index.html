@@ -18,7 +18,7 @@
     <div class="card tab-content" id="singleTab">
         <div class="form-group">
             <label for="appLink">投放链接（APP 链接）</label>
-            <input type="text" id="appLink" placeholder="例如：https://mp.elong.com/tenthousandaura/?activitycode=xxx" value="https://mp.elong.com/tenthousandaura/?activitycode=7d11cd76-3678-4d3f-a001-c2431031fc7c&if=5017380&of=5079371">
+            <input type="text" id="appLink" placeholder="例如：https://mp.elong.com/tenthousandaura/?activitycode=xxx" value="https://mp.elong.com/tenthousandaura/?activitycode=YOUR_ACTIVITY_CODE&if=XXXX&of=XXXX">
         </div>
         <div class="form-group">
             <label for="refid">Refid</label>
@@ -210,8 +210,8 @@
     </div>
 
     <!-- SheetJS：Excel 读写支持 -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz" crossorigin="anonymous"></script>
     <!-- JS 依赖：先加载配置，再加载核心逻辑，然后加载命名模块，最后加载 UI -->
     <script src="js/config.js" charset="utf-8"></script>
     <script src="js/generator.js" charset="utf-8"></script>

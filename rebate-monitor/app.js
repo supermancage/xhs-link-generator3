@@ -105,10 +105,14 @@ function sortTable(field) {
   renderTable();
 }
 
+// 用于 innerHTML 插值的转义函数：对 & < > " ' 五字符全部转义，浏览器显示时自动还原为原文
 function esc(str) {
-  var d = document.createElement('div');
-  d.textContent = str || '';
-  return d.innerHTML;
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function renderTable() {
