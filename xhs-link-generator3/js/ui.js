@@ -72,15 +72,93 @@
         }
 
         try {
-            var qr = qrcode(0, "L");
+            // 纠错级别 M（15% 容错，扫得更稳）；cellSize 6（65×65 模块时约 480px+，SVG 矢量自适应容器宽度）
+            var qr = qrcode(0, "M");
             qr.addData(text);
             qr.make();
-            container.innerHTML = qr.createSvgTag(3, 8);
+            container.innerHTML = qr.createSvgTag(6, 8);
+
+            // 新增「下载 PNG」按钮（参考草料二维码体验，仅插入 QR 容器内部）
+            var downloadBtn = document.createElement("button");
+            downloadBtn.type = "button";
+            downloadBtn.className = "copy-btn qr-download-btn";
+            downloadBtn.textContent = "\u2b07 下载二维码";
+            downloadBtn.addEventListener("click", function () {
+                downloadQrAsPng(qr);
+            });
+            container.appendChild(downloadBtn);
+
             container.style.display = "block";
             button.classList.add("active");
         } catch (e) {
             showToast("QR 码生成失败", "error");
         }
+    }
+
+    /**
+     * 将 QR 渲染为 PNG 并触发下载（参考草料二维码体验）
+     * 每个模块 10px、四周留 8 模块白色边距，canvas 尺寸 500px+
+     * @param {object} qr - qrcode-generator 实例
+     */
+    function downloadQrAsPng(qr) {
+        var moduleCount = qr.getModuleCount();
+        var cellSize = 10;
+        var margin = 8;
+        var size = moduleCount * cellSize + margin * 2 * cellSize;
+
+        var canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        var ctx = canvas.getContext("2d");
+
+        // 先铺白色背景，再画黑色模块
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = "#000000";
+        for (var row = 0; row < moduleCount; row += 1) {
+            for (var col = 0; col < moduleCount; col += 1) {
+                if (qr.isDark(row, col)) {
+                    ctx.fillRect(
+                        margin * cellSize + col * cellSize,
+                        margin * cellSize + row * cellSize,
+                        cellSize,
+                        cellSize
+                    );
+                }
+            }
+        }
+
+        var fileName = "qr-" + Date.now() + ".png";
+
+        if (canvas.toBlob) {
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    showToast("二维码下载失败", "error");
+                    return;
+                }
+                var url = URL.createObjectURL(blob);
+                triggerFileDownload(url, fileName);
+                URL.revokeObjectURL(url);
+                showToast("二维码下载已开始", "success");
+            }, "image/png");
+        } else {
+            triggerFileDownload(canvas.toDataURL("image/png"), fileName);
+            showToast("二维码下载已开始", "success");
+        }
+    }
+
+    /**
+     * 触发浏览器下载
+     * @param {string} url - blob URL 或 data URL
+     * @param {string} fileName - 下载文件名
+     */
+    function triggerFileDownload(url, fileName) {
+        var anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
     }
 
     /* ========== 批量结果存储 ========== */

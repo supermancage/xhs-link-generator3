@@ -504,6 +504,14 @@ button:disabled {
 .qr-code svg {
     display: block;
     margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
+/* QR 容器内下载按钮 */
+.qr-download-btn {
+    display: inline-block;
+    margin-top: 10px;
 }
 
 /* ===== 响应式 ===== */
