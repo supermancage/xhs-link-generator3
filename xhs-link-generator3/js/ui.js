@@ -220,8 +220,19 @@
             };
 
             Core.validateRequiredFields(payload, "当前输入");
+
+            // oCityID 注入：命中白名单 activitycode 且选择城市时追加
+            var cityInput = document.getElementById("ocityidCity").value;
+            var normalized = Core.normalizeAppLink(payload.appLink, cityInput);
+            if (normalized.warning) {
+                // 提示但不阻断：用户可选择继续
+                if (!global.confirm(normalized.warning + "\n\n确定继续生成吗？")) {
+                    return;
+                }
+            }
+
             var result = Core.buildLinks({
-                appLink: payload.appLink.trim(),
+                appLink: normalized.appLink,
                 refid: payload.refid.trim()
             });
 
@@ -325,6 +336,24 @@
     }
 
     /**
+     * 渲染提示汇总区域（oCityID 非阻断提示）
+     * @param {{ line: number, message: string }[]} warnings
+     * @returns {string} HTML 字符串
+     */
+    function renderWarningSummary(warnings) {
+        if (!warnings || !warnings.length) {
+            return "";
+        }
+        var html = '<div class="error-summary">';
+        html += '<div class="error-title">\u2139 以下行有提示（未阻断，已正常生成）：</div><ul>';
+        warnings.forEach(function (warn) {
+            html += '<li>第 ' + warn.line + ' 行：' + warn.message + '</li>';
+        });
+        html += '</ul></div>';
+        return html;
+    }
+
+    /**
      * 设置批量生成按钮的 loading 状态
      * @param {boolean} isLoading
      */
@@ -358,9 +387,9 @@
         document.getElementById("batchRowCount").textContent = output.resultCount + " 条结果";
         document.getElementById("batchColumnCount").textContent = "4 个链接输出";
 
-        // 渲染错误汇总（如果有）
+        // 渲染错误汇总（如果有）及 oCityID 提示
         var errorContainer = document.getElementById("batchErrorSummary");
-        errorContainer.innerHTML = renderErrorSummary(output.errors);
+        errorContainer.innerHTML = renderErrorSummary(output.errors) + renderWarningSummary(output.warnings);
 
         buildBatchPreview(output.previewRows);
         document.getElementById("batchResult").style.display = "block";
@@ -392,6 +421,7 @@
         var previewRows = [];
         var results = [];
         var errors = [];
+        var warnings = [];
         var headers = ["笔记ID", "投放链接", "refid",
             "素材类型", "业务线", "内容类型",
             "酒店城市", "酒店名称", "投放活动", "定向",
@@ -403,7 +433,7 @@
         // 检测表头行
         var firstRow = rows[0];
         var firstCell = String(firstRow[0] || "").toLowerCase();
-        var hasNamingCols = firstRow.length >= 10;
+        var hasNamingCols = firstRow.length >= 9;
         var startIndex = (firstCell.includes("笔记id") || firstCell.includes("noteid")) ? 1 : 0;
 
         for (var i = startIndex; i < rows.length; i++) {
@@ -435,7 +465,13 @@
                 var activity = hasNamingCols ? (cells[8] || "") : "";
                 var targeting = hasNamingCols ? (cells[9] || "") : "";
 
-                var linkResult = Core.buildLinks({ appLink: trimmedUrl, refid: refid.trim() });
+                // oCityID 注入：命中白名单 activitycode 且「酒店城市」列有值时追加
+                var normalized = Core.normalizeAppLink(trimmedUrl, city);
+                if (normalized.warning) {
+                    warnings.push({ line: i + 1, message: normalized.warning });
+                }
+
+                var linkResult = Core.buildLinks({ appLink: normalized.appLink, refid: refid.trim() });
 
                 var naming = "";
                 if (materialType) {
@@ -452,7 +488,7 @@
                 }
 
                 results.push([
-                    Core.escapeCsv(noteId), Core.escapeCsv(trimmedUrl), Core.escapeCsv(refid),
+                    Core.escapeCsv(noteId), Core.escapeCsv(normalized.appLink), Core.escapeCsv(refid),
                     Core.escapeCsv(materialType), Core.escapeCsv(bizLine), Core.escapeCsv(contentType),
                     Core.escapeCsv(city), Core.escapeCsv(hotelName), Core.escapeCsv(activity), Core.escapeCsv(targeting),
                     Core.escapeCsv(naming),
@@ -461,7 +497,7 @@
                 ].join(","));
 
                 previewRows.push([
-                    noteId, trimmedUrl, refid,
+                    noteId, normalized.appLink, refid,
                     materialType, bizLine, contentType,
                     city, hotelName, activity, targeting,
                     naming,
@@ -478,7 +514,7 @@
         document.getElementById("batchColumnCount").textContent = "4 个链接输出";
 
         var errorContainer = document.getElementById("batchErrorSummary");
-        errorContainer.innerHTML = renderErrorSummary(errors);
+        errorContainer.innerHTML = renderErrorSummary(errors) + renderWarningSummary(warnings);
 
         buildBatchPreview(previewRows);
         document.getElementById("batchResult").style.display = "block";
@@ -738,9 +774,23 @@
     }
 
     /**
+     * 初始化 oCityID 城市下拉选项（来自 LinkGenCityData）
+     */
+    function initCityDatalist() {
+        var datalist = document.getElementById("ocityidCityList");
+        if (!datalist || !global.LinkGenCityData) return;
+        Object.keys(global.LinkGenCityData.cityIds).forEach(function (name) {
+            var option = document.createElement("option");
+            option.value = name;
+            datalist.appendChild(option);
+        });
+    }
+
+    /**
      * 初始化整个 UI
      */
     function init() {
+        initCityDatalist();
         bindEvents();
     }
 

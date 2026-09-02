@@ -10,6 +10,71 @@
     var withPlaceholders = global.LinkGenConfig.withPlaceholders;
 
     /**
+     * 按需为投放链接追加 oCityID 参数
+     * 规则：
+     * - activitycode 命中白名单 + 提供城市名 → 查表追加 &oCityID=城市ID
+     * - activitycode 命中白名单 + 未提供城市 → 原样返回并给出提示
+     * - activitycode 未命中白名单 + 提供城市 → 原样返回并给出提示（忽略城市）
+     * - 链接已包含 oCityID → 不重复追加（幂等）
+     * - 城市名在对照表中查不到 → 抛错（批量场景该行跳过）
+     * @param {string} appLink - 投放链接
+     * @param {string} cityInput - 城市名（选填）
+     * @returns {{ appLink: string, warning: string }} warning 非空时为提示文案
+     * @throws {Error} 城市名无法解析时抛出
+     */
+    function normalizeAppLink(appLink, cityInput) {
+        var cityData = global.LinkGenCityData || {};
+        var whitelist = cityData.activityCodes || [];
+        var cityIds = cityData.cityIds || {};
+
+        var trimmed = String(appLink || "").trim();
+        var city = String(cityInput || "").trim();
+
+        // 解析 activitycode（参数名大小写不敏感）
+        var match = trimmed.match(/[?&]activitycode=([^&#]+)/i);
+        var code = match ? match[1] : "";
+        var isWhitelisted = !!code && whitelist.some(function (item) {
+            return item.toLowerCase() === code.toLowerCase();
+        });
+
+        // 提供了城市但活动不支持 oCityID → 忽略城市，提示
+        if (city && !isWhitelisted) {
+            return {
+                appLink: trimmed,
+                warning: "该投放链接的 activitycode 不在 oCityID 支持列表中，已忽略城市「" + city + "」，按原逻辑生成"
+            };
+        }
+
+        // 命中白名单但未提供城市 → 按原逻辑生成，提示
+        if (!city && isWhitelisted) {
+            return {
+                appLink: trimmed,
+                warning: "该活动支持 oCityID 参数（activitycode=" + code.slice(0, 8) + "…），未提供城市，已按原逻辑生成"
+            };
+        }
+
+        if (!city) {
+            return { appLink: trimmed, warning: "" };
+        }
+
+        // 城市名 → ID 查表
+        if (!Object.prototype.hasOwnProperty.call(cityIds, city)) {
+            throw new Error("城市「" + city + "」未在城市ID对照表中找到，请检查写法");
+        }
+
+        // 已包含 oCityID 时不重复追加（幂等）
+        if (/[?&]oCityID=/i.test(trimmed)) {
+            return {
+                appLink: trimmed,
+                warning: "投放链接已包含 oCityID 参数，未重复追加"
+            };
+        }
+
+        var separator = trimmed.indexOf("?") === -1 ? "?" : "&";
+        return { appLink: trimmed + separator + "oCityID=" + cityIds[city], warning: "" };
+    }
+
+    /**
      * 构建四种链接：DP链接、Universal Link、兜底链接、监测链接
      * @param {Object} payload
      * @param {string} payload.appLink - 投放链接（已 trim）
@@ -109,19 +174,33 @@
      * 解析批量输入的单行（支持 CSV 或空格分隔格式）
      * @param {string} line - 行文本
      * @param {number} index - 行索引
+     * @param {number} [headerCols] - 表头列数（用于 URL 含逗号时的字段合并判断；0/缺省则按列数启发式推断）
      * @returns {{ noteId: string, appLink: string, refid: string, lineLabel: string }}
      * @throws {Error} 格式不正确时抛出
      */
-    function parseBatchLine(line, index) {
+    function parseBatchLine(line, index, headerCols) {
         var lineLabel = "第 " + (index + 1) + " 行";
 
         // CSV 格式（含逗号）
         if (line.includes(",")) {
             var parts = parseCsvLine(line);
 
-            // URL参数含逗号时自动合并
+            // URL参数含逗号时自动合并（预期列数优先取表头列数）
             if (parts.length > 1 && (parts[1].indexOf("http://") === 0 || parts[1].indexOf("https://") === 0)) {
-                var expectedCols = (parts.length >= 10) ? 10 : 3;
+                var expectedCols;
+                if (headerCols) {
+                    expectedCols = headerCols;
+                } else if (parts.length >= 11) {
+                    expectedCols = 10;
+                } else if (parts.length === 10) {
+                    // 无表头时 10 列有歧义（10列真实数据 vs 9列+URL含逗号），按 refid 特征判断：
+                    // refid 通常为纯字母数字，URL 残段会带 = & ? 等符号
+                    expectedCols = /^[A-Za-z0-9_-]+$/.test(parts[2]) ? 10 : 9;
+                } else if (parts.length >= 9) {
+                    expectedCols = 9;
+                } else {
+                    expectedCols = 3;
+                }
                 if (parts.length > expectedCols) {
                     var extra = parts.length - expectedCols;
                     var mergedUrl = parts.slice(1, 1 + extra + 1).join(",");
@@ -129,8 +208,8 @@
                 }
             }
 
-            // 新格式：含命名字段（\u226510列）
-            if (parts.length >= 10) {
+            // 新格式：含命名字段（≥9列，第10列「定向」可选）
+            if (parts.length >= 9) {
                 return {
                     noteId: parts[0],
                     appLink: parts[1],
@@ -225,6 +304,7 @@
         var previewRows = [];
         var results = [];
         var errors = [];
+        var warnings = [];
         var headers = ["笔记ID", "投放链接", "refid",
             "素材类型", "业务线", "内容类型",
             "酒店城市", "酒店名称", "投放活动", "定向",
@@ -234,14 +314,23 @@
         previewRows.push(headers);
 
         var firstLine = lines[0].toLowerCase();
-        var startIndex = (firstLine.includes("笔记id") || firstLine.includes("noteid")) ? 1 : 0;
+        var hasHeader = firstLine.includes("笔记id") || firstLine.includes("noteid");
+        var startIndex = hasHeader ? 1 : 0;
+        var headerCols = hasHeader ? parseCsvLine(lines[0]).length : 0;
 
         for (var i = startIndex; i < lines.length; i += 1) {
             try {
-                var item = parseBatchLine(lines[i].trim(), i);
+                var item = parseBatchLine(lines[i].trim(), i, headerCols);
                 validateRequiredFields(item, item.lineLabel);
+
+                // oCityID 注入：命中白名单 activitycode 且提供城市时追加
+                var normalized = normalizeAppLink(item.appLink, item.city);
+                if (normalized.warning) {
+                    warnings.push({ line: i + 1, message: normalized.warning });
+                }
+
                 var built = buildLinks({
-                    appLink: item.appLink.trim(),
+                    appLink: normalized.appLink,
                     refid: item.refid.trim()
                 });
 
@@ -262,7 +351,7 @@
 
                 results.push([
                     escapeCsv(item.noteId.trim()),
-                    escapeCsv(item.appLink.trim()),
+                    escapeCsv(normalized.appLink),
                     escapeCsv(item.refid.trim()),
                     escapeCsv(item.materialType),
                     escapeCsv(item.bizLine),
@@ -280,7 +369,7 @@
 
                 previewRows.push([
                     item.noteId.trim(),
-                    item.appLink.trim(),
+                    normalized.appLink,
                     item.refid.trim(),
                     item.materialType,
                     item.bizLine,
@@ -308,12 +397,14 @@
             csvText: results.join("\n"),
             previewRows: previewRows,
             errors: errors,
+            warnings: warnings,
             resultCount: previewRows.length - 1
         };
     }
 
     global.LinkGenCore = {
         buildLinks: buildLinks,
+        normalizeAppLink: normalizeAppLink,
         validateRequiredFields: validateRequiredFields,
         escapeCsv: escapeCsv,
         parseCsvLine: parseCsvLine,

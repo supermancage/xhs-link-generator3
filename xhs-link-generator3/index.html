@@ -29,6 +29,13 @@
             <input type="text" id="noteid" placeholder="例如：123456789">
         </div>
 
+        <div class="form-group">
+            <label for="ocityidCity">oCityID 城市（选填）</label>
+            <input type="text" id="ocityidCity" list="ocityidCityList" placeholder="输入或选择城市，例如：万宁">
+            <datalist id="ocityidCityList"></datalist>
+            <div class="help-text">仅当投放链接的 activitycode 属于 oCityID 支持列表时生效，自动查表追加 &amp;oCityID=城市ID</div>
+        </div>
+
         <hr class="form-divider">
         <div class="section-label">广告计划命名</div>
 
@@ -212,7 +219,8 @@
     <!-- SheetJS：Excel 读写支持 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz" crossorigin="anonymous"></script>
-    <!-- JS 依赖：先加载配置，再加载核心逻辑，然后加载命名模块，最后加载 UI -->
+    <!-- JS 依赖：先加载城市数据，再加载配置，然后加载核心逻辑，随后加载命名模块，最后加载 UI -->
+    <script src="js/citydata.js" charset="utf-8"></script>
     <script src="js/config.js" charset="utf-8"></script>
     <script src="js/generator.js" charset="utf-8"></script>
     <script src="js/naming.js" charset="utf-8"></script>
