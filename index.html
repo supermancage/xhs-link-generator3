@@ -1,38 +1,61 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="zh-CN" data-page-node-id="iKdjqOsy9TkCrL7Sx6c2OS">
+<head data-page-node-id="DbCj0zKI7jbiBeGpACSp3J">
+  <meta charset="UTF-8" data-page-node-id="EM1KSUqA7P6F5e9UApew6J">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="P3n1Aa5TlYjyuJAZInwbja">
   <title>小红书投放工具箱</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css" data-page-node-id="FZuGG73cL28puj7KJB6yH4">
 </head>
-<body>
-  <div class="app">
+<body data-page-node-id="vb5kkHyhFBBCFHHfTVZxmV">
+  <div class="app" data-page-node-id="CCQYSZZfypmTtFHCqzgcJv">
 
     <!-- 顶部 Header -->
-    <header class="app-header">
-      <div class="header-inner">
-        <h1 class="app-title">小红书<span class="accent">投放工具箱</span></h1>
-        <p class="app-subtitle">关键词分类 · 链接生成 · 返货监控 — 一站式投放效率工具</p>
+    <header class="app-header" data-page-node-id="p9uEimkmxQ7Fsyab0R8axK">
+      <div class="header-inner" data-page-node-id="CBtvV7aZ7jFWaxJYAw8UNq">
+        <h1 class="app-title" data-page-node-id="tN2NZAANjrgvjaKgRSnVLK">小红书<span class="accent" data-page-node-id="4ZO0DeCEV8oWNkSBihfLHk">投放工具箱</span></h1>
+        <p class="app-subtitle" data-page-node-id="gcQVHGwTKaaESQ8JhemUvG">关键词分类 · 链接生成 · 返货监控 — 一站式投放效率工具</p>
       </div>
     </header>
 
-    <!-- 顶部导航 Tab（横向排列） -->
-    <nav class="tab-nav" role="tablist" aria-label="工具箱导航">
-        <button type="button" class="tab-btn" id="tab-classifier" role="tab"
-                aria-controls="tool-panel" aria-selected="false" data-tool="classifier">🔍 关键词分类</button>
-        <button type="button" class="tab-btn" id="tab-generator" role="tab"
-                aria-controls="tool-panel" aria-selected="false" data-tool="generator">🔗 链接生成</button>
-        <button type="button" class="tab-btn" id="tab-rebate" role="tab"
-                aria-controls="tool-panel" aria-selected="false" data-tool="rebate">📊 返货监控</button>
-      </nav>
+    <!-- 主体一行：左侧可折叠导航 + 右侧内容区 -->
+    <div class="app-body" data-page-node-id="t1NmBU5ORBAtmQFN8yVx8k">
+
+      <!-- 左侧竖向导航（可折叠） -->
+      <aside class="sidebar" id="app-sidebar" data-page-node-id="GMH0bbkcg8FSXYIRpf2GlZ">
+        <div class="sidebar-header" data-page-node-id="0jgpAay5kEkb1PsiOA7ovG">
+          <button type="button" class="sidebar-toggle" id="sidebar-toggle"
+                  aria-controls="tool-nav" aria-expanded="true" title="收起侧边栏" data-page-node-id="4RqFzWxM6ed0tpHk9WyZ74">«</button>
+        </div>
+        <nav class="tab-nav" id="tool-nav" role="tablist" aria-label="工具箱导航" aria-orientation="vertical" data-page-node-id="CzGmx1yf4pGwhBMBR3yGjG">
+          <button type="button" class="tab-btn" id="tab-classifier" role="tab"
+                  aria-controls="tool-panel" aria-selected="false" data-tool="classifier"
+                  title="关键词分类" aria-label="关键词分类" data-page-node-id="JReOLKUqymoD5vhsABoii5">
+            <span class="tab-icon" aria-hidden="true" data-page-node-id="Iv1yOfCvkyDTlBOBcmPbyv">🔍</span>
+            <span class="tab-label" data-page-node-id="wsuqomklNTOipPg3IKLtI4">关键词分类</span>
+          </button>
+          <button type="button" class="tab-btn" id="tab-generator" role="tab"
+                  aria-controls="tool-panel" aria-selected="false" data-tool="generator"
+                  title="链接生成" aria-label="链接生成" data-page-node-id="xwtlG94vt9QA4o5aYW7nud">
+            <span class="tab-icon" aria-hidden="true" data-page-node-id="c1ENsILaZ16c3q2zKs7MnN">🔗</span>
+            <span class="tab-label" data-page-node-id="xAGRtdaV2J9AikyL76GeFl">链接生成</span>
+          </button>
+          <button type="button" class="tab-btn" id="tab-rebate" role="tab"
+                  aria-controls="tool-panel" aria-selected="false" data-tool="rebate"
+                  title="返货监控" aria-label="返货监控" data-page-node-id="KHGVDlsGRwfDYRdeT3vb9C">
+            <span class="tab-icon" aria-hidden="true" data-page-node-id="WjZTvE5TfaJmGlBcroBsCL">📊</span>
+            <span class="tab-label" data-page-node-id="yX4EzCVFCrzs4A1Gh3IobU">返货监控</span>
+          </button>
+        </nav>
+      </aside>
 
       <!-- 内容区：iframe 加载当前选中的工具 -->
-      <main class="app-main" role="tabpanel" id="tool-panel" aria-label="工具内容">
+      <main class="app-main" role="tabpanel" id="tool-panel" aria-label="工具内容" data-page-node-id="dTavRUET0szW8Pnnwc4p5X">
         <iframe id="tool-frame" class="tool-frame"
                 title="工具内容"
-                src="keyword-classifier/index.html"></iframe>
+                src="keyword-classifier/index.html" data-page-node-id="YpT41AHqCu5JRagXidsiRn"></iframe>
       </main>
+
+    </div>
 
   </div>
 
@@ -53,8 +76,15 @@
       };
       var DEFAULT_TOOL = 'classifier';
 
+      /** 侧边栏折叠状态持久化键名：值为 '1' 表示收起，'0' 表示展开。 */
+      var SIDEBAR_STATE_KEY = 'sidebarCollapsed';
+      /** 窄屏断点（与 css/style.css 的 768px media query 保持一致）。 */
+      var NARROW_BREAKPOINT = 768;
+
       var frame = document.getElementById('tool-frame');
       var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
+      var sidebar = document.getElementById('app-sidebar');
+      var toggleBtn = document.getElementById('sidebar-toggle');
 
       /** 从当前 URL hash 解析工具名，非法或缺失时回退到默认工具。 */
       function parseTool() {
@@ -86,6 +116,38 @@
         }
       }
 
+      /** 读取折叠状态：优先取 localStorage，无记录时窄屏默认收起、宽屏默认展开。 */
+      function readCollapsed() {
+        var raw = null;
+        try {
+          raw = window.localStorage.getItem(SIDEBAR_STATE_KEY);
+        } catch (err) {
+          raw = null; // localStorage 不可用（隐私模式等）时退化为按视口宽度决定
+        }
+        if (raw === '1') {
+          return true;
+        }
+        if (raw === '0') {
+          return false;
+        }
+        return window.innerWidth <= NARROW_BREAKPOINT;
+      }
+
+      /** 应用折叠状态：切换样式 class、更新按钮文案与无障碍属性；persist 为真时写入 localStorage。 */
+      function applyCollapsed(collapsed, persist) {
+        sidebar.classList.toggle('collapsed', collapsed);
+        toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        toggleBtn.textContent = collapsed ? '»' : '«';
+        toggleBtn.title = collapsed ? '展开侧边栏' : '收起侧边栏';
+        if (persist) {
+          try {
+            window.localStorage.setItem(SIDEBAR_STATE_KEY, collapsed ? '1' : '0');
+          } catch (err) {
+            // 写入失败不影响交互，仅失去刷新后记忆能力
+          }
+        }
+      }
+
       // Tab 点击：激活工具 + 更新 hash（hash 变化会再次触发 activate，幂等无害）
       tabs.forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -95,6 +157,11 @@
             syncHash(tool);
           }
         });
+      });
+
+      // 折叠按钮点击：在展开/收起间切换并持久化
+      toggleBtn.addEventListener('click', function () {
+        applyCollapsed(!sidebar.classList.contains('collapsed'), true);
       });
 
       // hashchange：支持浏览器前进/后退、手动改 hash；非法 hash 立即归一化 URL
@@ -113,6 +180,9 @@
         history.replaceState(null, '', '#' + initial);
       }
       activate(initial);
+
+      // 初始化：恢复上次记录的折叠状态（不回写 localStorage，避免覆盖既有偏好）
+      applyCollapsed(readCollapsed(), false);
     })();
   </script>
 </body>

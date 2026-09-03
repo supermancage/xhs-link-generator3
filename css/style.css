@@ -14,6 +14,9 @@
   --bg: #f3f4f6;
   --card-bg: #ffffff;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+  --sidebar-width: 200px;
+  --sidebar-width-collapsed: 60px;
 }
 
 * {
@@ -35,12 +38,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- 整体布局：Header 固定，下方依次为顶部导航 + 内容区，填满剩余视口 ---------- */
+/* ---------- 整体布局：Header 固定，下方一行 = 左侧边栏 + 右侧内容区，填满剩余视口 ---------- */
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   min-height: 0;
+}
+
+/* 主体一行：横向排列侧边栏与内容区 */
+.app-body {
+  flex: 1;
+  min-height: 0; /* 允许收缩，确保内容区高度被视口约束 */
+  display: flex;
+  flex-direction: row;
 }
 
 /* ---------- Header ---------- */
@@ -77,41 +88,103 @@ body {
   color: var(--text-secondary);
 }
 
-/* ---------- 顶部导航 Tab（横向排列） ---------- */
-.tab-nav {
+/* ---------- 左侧边栏（竖向导航，可折叠） ---------- */
+.sidebar {
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  overflow: hidden; /* 收起时裁掉溢出文字，配合宽度过渡 */
+  transition: width 0.2s ease;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* ---------- 侧边栏顶部：折叠切换按钮 ---------- */
+.sidebar-header {
   flex-shrink: 0;
   display: flex;
-  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.sidebar-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  color: var(--primary-strong);
+  border-color: var(--primary);
+  background-color: var(--primary-soft);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---------- 侧边导航 Tab（竖向排列） ---------- */
+.tab-nav {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   align-items: stretch;
   gap: 4px;
   background: var(--card-bg);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tab-nav::-webkit-scrollbar {
-  display: none;
+  padding: 10px 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .tab-btn {
   appearance: none;
   -webkit-appearance: none;
-  display: inline-flex;
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
+  gap: 10px;
+  width: 100%;
   border: none;
+  border-left: 3px solid transparent; /* 占位，激活时变主色，避免文字位移 */
+  border-radius: 0 8px 8px 0;
   background: transparent;
-  padding: 14px 18px;
+  padding: 10px 12px;
   font-size: 14px;
   font-weight: 500;
   font-family: inherit;
-  text-align: center;
+  text-align: left;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 0;
-  border-bottom: 3px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -125,17 +198,49 @@ body {
   outline-offset: -2px;
 }
 
-/* 激活态：蓝色文字 + 底部蓝色条 + 浅蓝填充 */
+/* 激活态：蓝色文字 + 左侧蓝色竖条 + 浅蓝填充（收起态靠竖条与填充指示选中项） */
 .tab-btn.active {
   color: var(--primary);
   font-weight: 600;
   background-color: var(--primary-soft);
-  border-bottom-color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+/* Tab 图标：收起态仍保持可见 */
+.tab-icon {
+  flex-shrink: 0;
+  width: 20px;
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 收起态：隐藏文字、图标居中 */
+.sidebar.collapsed .tab-nav {
+  padding: 10px 6px;
+}
+
+.sidebar.collapsed .tab-btn {
+  gap: 0;
+  justify-content: center;
+  padding: 10px 0;
+  border-radius: 8px;
+}
+
+.sidebar.collapsed .tab-label {
+  display: none;
 }
 
 /* ---------- 内容区 ---------- */
 .app-main {
   flex: 1;
+  min-width: 0; /* 允许横向收缩，避免被 iframe 撑破 */
   min-height: 0; /* 允许 flex 子项收缩，确保 iframe 高度被视口约束 */
   display: flex;
   padding: 16px;
@@ -151,7 +256,7 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-/* ---------- 响应式：窄屏 Tab 保持横向可滚动 ---------- */
+/* ---------- 响应式：窄屏侧边栏进一步收窄，保证内容区可用宽度 ---------- */
 @media (max-width: 768px) {
   .app-header {
     padding: 12px 16px 10px;
@@ -162,14 +267,24 @@ body {
   .app-subtitle {
     font-size: 12px;
   }
+  .sidebar {
+    width: 160px;
+  }
+  .sidebar.collapsed {
+    width: 52px;
+  }
   .tab-nav {
-    gap: 0;
-    padding: 0 8px;
+    gap: 2px;
+    padding: 8px 6px;
   }
   .tab-btn {
-    flex-shrink: 0;
-    padding: 11px 14px;
+    gap: 8px;
+    padding: 10px 8px;
     font-size: 13px;
+  }
+  .tab-icon {
+    width: 18px;
+    font-size: 15px;
   }
   .app-main {
     padding: 8px;
@@ -182,5 +297,16 @@ body {
   }
   .header-inner {
     gap: 6px;
+  }
+  .sidebar {
+    width: 132px;
+  }
+  .sidebar.collapsed {
+    width: 48px;
+  }
+  .tab-btn {
+    gap: 6px;
+    padding: 9px 6px;
+    font-size: 12px;
   }
 }
