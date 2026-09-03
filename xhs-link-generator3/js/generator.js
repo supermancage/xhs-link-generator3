@@ -25,7 +25,6 @@
     function normalizeAppLink(appLink, cityInput) {
         var cityData = global.LinkGenCityData || {};
         var whitelist = cityData.activityCodes || [];
-        var cityIds = cityData.cityIds || {};
 
         var trimmed = String(appLink || "").trim();
         var city = String(cityInput || "").trim();
@@ -57,9 +56,12 @@
             return { appLink: trimmed, warning: "" };
         }
 
-        // 城市名 → ID 查表
-        if (!Object.prototype.hasOwnProperty.call(cityIds, city)) {
-            throw new Error("城市「" + city + "」未在城市ID对照表中找到，请检查写法");
+        // 城市名 → ID 查表（支持官方全称/带后缀/裸名/县级，见 LinkGenCityData.lookupCity）
+        var cityHit = global.LinkGenCityData.lookupCity
+            ? global.LinkGenCityData.lookupCity(city)
+            : null;
+        if (!cityHit) {
+            throw new Error("城市「" + city + "」未在城市ID对照表中找到，请检查写法（支持「市/县」全称或常用名，如 万宁/万宁市/吉安县）");
         }
 
         // 已包含 oCityID 时不重复追加（幂等）
@@ -71,7 +73,7 @@
         }
 
         var separator = trimmed.indexOf("?") === -1 ? "?" : "&";
-        return { appLink: trimmed + separator + "oCityID=" + cityIds[city], warning: "" };
+        return { appLink: trimmed + separator + "oCityID=" + cityHit.id, warning: "" };
     }
 
     /**
