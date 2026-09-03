@@ -10,17 +10,33 @@
     var withPlaceholders = global.LinkGenConfig.withPlaceholders;
 
     /**
+     * 生成结果状态文案（批量输出「生成结果」列 / 预览徽章）
+     * @param {string} status - normalizeAppLink 返回的机器状态码
+     * @returns {string} 用户可读文案
+     */
+    function statusText(status) {
+        var map = {
+            "unsupported": "活动activity不支持城市添加",
+            "no-city": "活动activity支持城市添加，未填城市",
+            "city-ok": "活动activity支持城市添加，城市匹配成功",
+            "city-fail": "活动activity支持城市添加，城市匹配不成功",
+            "already-has": "投放链接已含 oCityID，未重复追加"
+        };
+        return map[status] || "";
+    }
+
+    /**
      * 按需为投放链接追加 oCityID 参数
      * 规则：
-     * - activitycode 命中白名单 + 提供城市名 → 查表追加 &oCityID=城市ID
-     * - activitycode 命中白名单 + 未提供城市 → 原样返回并给出提示
-     * - activitycode 未命中白名单 + 提供城市 → 原样返回并给出提示（忽略城市）
-     * - 链接已包含 oCityID → 不重复追加（幂等）
-     * - 城市名在对照表中查不到 → 抛错（批量场景该行跳过）
+     * - activitycode 命中白名单 + 提供城市名 → 查表追加 &oCityID=城市ID（status=city-ok）
+     * - activitycode 命中白名单 + 未提供城市 → 原样返回（status=no-city，城市选填）
+     * - activitycode 未命中/缺失 + 提供城市 → 原样返回并忽略城市（status=unsupported）
+     * - 城市名在对照表中查不到 → 不阻断，原样返回并提示（status=city-fail，批量仍生成该行并告知）
+     * - 链接已包含 oCityID → 不重复追加（status=already-has，幂等）
      * @param {string} appLink - 投放链接
      * @param {string} cityInput - 城市名（选填）
-     * @returns {{ appLink: string, warning: string }} warning 非空时为提示文案
-     * @throws {Error} 城市名无法解析时抛出
+     * @returns {{ appLink: string, warning: string, status: string }}
+     *   warning 非空时为提示文案；status 为机器状态码（配合 statusText 转展示文案）
      */
     function normalizeAppLink(appLink, cityInput) {
         var cityData = global.LinkGenCityData || {};
@@ -40,20 +56,22 @@
         if (city && !isWhitelisted) {
             return {
                 appLink: trimmed,
+                status: "unsupported",
                 warning: "该投放链接的 activitycode 不在 oCityID 支持列表中，已忽略城市「" + city + "」，按原逻辑生成"
             };
         }
 
-        // 命中白名单但未提供城市 → 按原逻辑生成，提示
+        // 命中白名单但未提供城市 → 按原逻辑生成，提示（城市为选填）
         if (!city && isWhitelisted) {
             return {
                 appLink: trimmed,
+                status: "no-city",
                 warning: "该活动支持 oCityID 参数（activitycode=" + code.slice(0, 8) + "…），未提供城市，已按原逻辑生成"
             };
         }
 
         if (!city) {
-            return { appLink: trimmed, warning: "" };
+            return { appLink: trimmed, status: "unsupported", warning: "" };
         }
 
         // 城市名 → ID 查表（支持官方全称/带后缀/裸名/县级，见 LinkGenCityData.lookupCity）
@@ -61,19 +79,25 @@
             ? global.LinkGenCityData.lookupCity(city)
             : null;
         if (!cityHit) {
-            throw new Error("城市「" + city + "」未在城市ID对照表中找到，请检查写法（支持「市/县」全称或常用名，如 万宁/万宁市/吉安县）");
+            // 匹配不成功 → 不阻断，降级为原链接生成并明确告知
+            return {
+                appLink: trimmed,
+                status: "city-fail",
+                warning: "该活动支持 oCityID 参数，但城市「" + city + "」匹配不成功（城市ID对照表中未找到），已忽略城市按原逻辑生成"
+            };
         }
 
         // 已包含 oCityID 时不重复追加（幂等）
         if (/[?&]oCityID=/i.test(trimmed)) {
             return {
                 appLink: trimmed,
+                status: "already-has",
                 warning: "投放链接已包含 oCityID 参数，未重复追加"
             };
         }
 
         var separator = trimmed.indexOf("?") === -1 ? "?" : "&";
-        return { appLink: trimmed + separator + "oCityID=" + cityHit.id, warning: "" };
+        return { appLink: trimmed + separator + "oCityID=" + cityHit.id, status: "city-ok", warning: "" };
     }
 
     /**
@@ -311,7 +335,8 @@
             "素材类型", "业务线", "内容类型",
             "酒店城市", "酒店名称", "投放活动", "定向",
             "广告计划命名",
-            "DP链接", "Universal Link", "兜底链接", "监测链接"];
+            "DP链接", "Universal Link", "兜底链接", "监测链接",
+            "生成结果"];
         results.push(headers.join(","));
         previewRows.push(headers);
 
@@ -351,6 +376,10 @@
                     });
                 }
 
+                // 生成结果状态：随行输出（CSV 尾列文字，预览尾元素为 {code, text}）
+                var status = normalized.status || (item.city ? "city-fail" : "unsupported");
+                var statusLabel = statusText(status);
+
                 results.push([
                     escapeCsv(item.noteId.trim()),
                     escapeCsv(normalized.appLink),
@@ -366,7 +395,8 @@
                     escapeCsv(built.dpLink),
                     escapeCsv(built.ulLink),
                     escapeCsv(built.fallbackLink),
-                    escapeCsv(built.trackLink)
+                    escapeCsv(built.trackLink),
+                    escapeCsv(statusLabel)
                 ].join(","));
 
                 previewRows.push([
@@ -384,7 +414,8 @@
                     built.dpLink,
                     built.ulLink,
                     built.fallbackLink,
-                    built.trackLink
+                    built.trackLink,
+                    { code: status, text: statusLabel }
                 ]);
             } catch (lineErr) {
                 // 逐行容错：记录错误，继续处理后续行
@@ -407,6 +438,7 @@
     global.LinkGenCore = {
         buildLinks: buildLinks,
         normalizeAppLink: normalizeAppLink,
+        statusText: statusText,
         validateRequiredFields: validateRequiredFields,
         escapeCsv: escapeCsv,
         parseCsvLine: parseCsvLine,

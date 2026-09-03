@@ -576,6 +576,52 @@ button:disabled {
     }
 }
 
+/* 三列表单行（Refid / 笔记 ID / oCityID 城市） */
+.form-row-3col {
+    display: flex;
+    gap: 12px;
+}
+
+.form-row-3col .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+.row-3col-help {
+    margin: -6px 0 16px;
+}
+
+@media (max-width: 760px) {
+    .form-row-3col {
+        flex-direction: column;
+        gap: 0;
+    }
+    .row-3col-help {
+        margin: 0;
+    }
+}
+
+/* 批量预览「生成结果」徽章变体 */
+.status-badge.badge-success {
+    background: #eef8f0;
+    color: #2e7d32;
+}
+
+.status-badge.badge-warning {
+    background: #fff6e6;
+    color: #b26a00;
+}
+
+.status-badge.badge-muted {
+    background: #f2f3f5;
+    color: #777;
+}
+
+.status-badge.badge-neutral {
+    background: #eef3fb;
+    color: #3b6ea5;
+}
+
 /* ===== 广告计划命名 折叠面板 ===== */
 
 .naming-panel {

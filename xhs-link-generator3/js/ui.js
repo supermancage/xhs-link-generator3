@@ -339,10 +339,19 @@
             refidTd.textContent = row[2] || "";
             tr.appendChild(refidTd);
 
+            // 生成结果状态徽章（row[15] = { code, text }）
             var statusTd = document.createElement("td");
             var badge = document.createElement("span");
-            badge.className = "status-badge";
-            badge.textContent = "4 个链接已生成";
+            var badgeInfo = row[15] && typeof row[15] === "object" ? row[15] : null;
+            var codeClass = {
+                "city-ok": "badge-success",
+                "city-fail": "badge-warning",
+                "unsupported": "badge-muted",
+                "no-city": "badge-neutral",
+                "already-has": "badge-neutral"
+            };
+            badge.className = "status-badge " + (badgeInfo ? (codeClass[badgeInfo.code] || "badge-muted") : "badge-neutral");
+            badge.textContent = badgeInfo ? badgeInfo.text : "4 个链接已生成";
             statusTd.appendChild(badge);
             tr.appendChild(statusTd);
 
@@ -463,7 +472,8 @@
             "素材类型", "业务线", "内容类型",
             "酒店城市", "酒店名称", "投放活动", "定向",
             "广告计划命名",
-            "DP链接", "Universal Link", "兜底链接", "监测链接"];
+            "DP链接", "Universal Link", "兜底链接", "监测链接",
+            "生成结果"];
         results.push(headers.join(","));
         previewRows.push(headers);
 
@@ -524,13 +534,18 @@
                     });
                 }
 
+                // 生成结果状态：随行输出（CSV 尾列文字，预览尾元素为 {code, text}）
+                var status = normalized.status || (city ? "city-fail" : "unsupported");
+                var statusLabel = Core.statusText ? Core.statusText(status) : "";
+
                 results.push([
                     Core.escapeCsv(noteId), Core.escapeCsv(normalized.appLink), Core.escapeCsv(refid),
                     Core.escapeCsv(materialType), Core.escapeCsv(bizLine), Core.escapeCsv(contentType),
                     Core.escapeCsv(city), Core.escapeCsv(hotelName), Core.escapeCsv(activity), Core.escapeCsv(targeting),
                     Core.escapeCsv(naming),
                     Core.escapeCsv(linkResult.dpLink), Core.escapeCsv(linkResult.ulLink),
-                    Core.escapeCsv(linkResult.fallbackLink), Core.escapeCsv(linkResult.trackLink)
+                    Core.escapeCsv(linkResult.fallbackLink), Core.escapeCsv(linkResult.trackLink),
+                    Core.escapeCsv(statusLabel)
                 ].join(","));
 
                 previewRows.push([
@@ -538,7 +553,8 @@
                     materialType, bizLine, contentType,
                     city, hotelName, activity, targeting,
                     naming,
-                    linkResult.dpLink, linkResult.ulLink, linkResult.fallbackLink, linkResult.trackLink
+                    linkResult.dpLink, linkResult.ulLink, linkResult.fallbackLink, linkResult.trackLink,
+                    { code: status, text: statusLabel }
                 ]);
             } catch (lineErr) {
                 errors.push({ line: i + 1, message: lineErr.message });
