@@ -36,8 +36,13 @@
             <div class="help-text">仅当投放链接的 activitycode 属于 oCityID 支持列表时生效，自动查表追加 &amp;oCityID=城市ID</div>
         </div>
 
-        <hr class="form-divider">
-        <div class="section-label">广告计划命名</div>
+        <details class="naming-panel" id="namingPanel">
+            <summary>
+                <span class="section-label">广告计划命名</span>
+                <span class="naming-hint">素材 / 业务线 / 内容类型 / 目的地 / 活动 / 定向</span>
+                <span class="naming-arrow"></span>
+            </summary>
+            <div class="naming-body">
 
         <div class="form-row-2col">
             <div class="form-group">
@@ -93,6 +98,9 @@
                 <input type="text" id="namingTargeting" placeholder="可选，为空时不拼接">
             </div>
         </div>
+
+            </div>
+        </details>
 
         <button type="button" id="generateSingleBtn">生成链接</button>
     </div>

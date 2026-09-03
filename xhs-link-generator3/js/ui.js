@@ -771,6 +771,17 @@
         };
         ctSelect.addEventListener("change", updateHotelVisibility);
         updateHotelVisibility();
+
+        // 广告计划命名折叠面板：默认收起，记忆用户展开/收起状态
+        var namingPanel = document.getElementById("namingPanel");
+        if (namingPanel && localStorage.getItem("namingPanelOpen") === "1") {
+            namingPanel.open = true;
+        }
+        if (namingPanel) {
+            namingPanel.addEventListener("toggle", function () {
+                localStorage.setItem("namingPanelOpen", namingPanel.open ? "1" : "0");
+            });
+        }
     }
 
     /**

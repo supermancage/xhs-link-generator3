@@ -575,3 +575,73 @@ button:disabled {
         gap: 0;
     }
 }
+
+/* ===== 广告计划命名 折叠面板 ===== */
+
+.naming-panel {
+    border: 1px solid #f3e3e7;
+    border-radius: 10px;
+    background: #fffbfc;
+    margin: 4px 0 20px;
+    overflow: hidden;
+}
+
+.naming-panel > summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    user-select: none;
+    flex-wrap: wrap;
+}
+
+.naming-panel > summary::-webkit-details-marker {
+    display: none;
+}
+
+.naming-panel > summary .section-label {
+    margin: 0;
+    font-size: 14px;
+    color: #fe2c55;
+}
+
+.naming-hint {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.naming-arrow {
+    flex-shrink: 0;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #fe2c55;
+    transition: transform 0.2s ease;
+}
+
+.naming-panel[open] > summary .naming-arrow {
+    transform: rotate(180deg);
+}
+
+.naming-panel[open] > summary {
+    background: #fff0f3;
+}
+
+.naming-body {
+    border-top: 1px dashed #f3e3e7;
+    padding: 16px 14px 0;
+}
+
+@media (max-width: 640px) {
+    .naming-hint {
+        white-space: normal;
+    }
+}
