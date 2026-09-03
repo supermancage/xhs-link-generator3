@@ -50,6 +50,53 @@
     /* ========== QR Code ========== */
 
     /**
+     * 将指定文本渲染为 QR 码 SVG，插入容器，并附带「下载 PNG」按钮
+     * @param {HTMLElement} container - QR 容器元素
+     * @param {string} text - 二维码内容
+     */
+    function renderQrInto(container, text) {
+        // 纠错级别 M（15% 容错，扫得更稳）；cellSize 6（65×65 模块时约 480px+，SVG 矢量自适应容器宽度）
+        var qr = qrcode(0, "M");
+        qr.addData(text);
+        qr.make();
+        container.innerHTML = qr.createSvgTag(6, 8);
+
+        // 「下载 PNG」按钮（参考草料二维码体验，仅插入 QR 容器内部）
+        var downloadBtn = document.createElement("button");
+        downloadBtn.type = "button";
+        downloadBtn.className = "copy-btn qr-download-btn";
+        downloadBtn.textContent = "\u2b07 下载二维码";
+        downloadBtn.addEventListener("click", function () {
+            downloadQrAsPng(qr);
+        });
+        container.appendChild(downloadBtn);
+
+        container.style.display = "block";
+    }
+
+    /**
+     * 若某结果链接的 QR 码当前已展开，则用最新文本重绘
+     * （解决"多次生成链接但已展开的二维码仍是旧内容"的问题）
+     * @param {string} qrContainerId - QR 容器 ID
+     * @param {string} textareaId - 对应链接文本框 ID
+     */
+    function refreshQrIfVisible(qrContainerId, textareaId) {
+        var container = document.getElementById(qrContainerId);
+        if (!container || container.style.display !== "block") {
+            return; // 未展开时无需刷新（保持懒渲染）
+        }
+        var text = document.getElementById(textareaId).value;
+        if (!text) {
+            return;
+        }
+        try {
+            renderQrInto(container, text);
+        } catch (e) {
+            showToast("QR 码刷新失败", "error");
+        }
+    }
+
+    /**
      * 切换 QR 码显示
      * @param {string} qrContainerId - QR 容器 ID
      * @param {string} textareaId - 对应链接文本框 ID
@@ -72,23 +119,7 @@
         }
 
         try {
-            // 纠错级别 M（15% 容错，扫得更稳）；cellSize 6（65×65 模块时约 480px+，SVG 矢量自适应容器宽度）
-            var qr = qrcode(0, "M");
-            qr.addData(text);
-            qr.make();
-            container.innerHTML = qr.createSvgTag(6, 8);
-
-            // 新增「下载 PNG」按钮（参考草料二维码体验，仅插入 QR 容器内部）
-            var downloadBtn = document.createElement("button");
-            downloadBtn.type = "button";
-            downloadBtn.className = "copy-btn qr-download-btn";
-            downloadBtn.textContent = "\u2b07 下载二维码";
-            downloadBtn.addEventListener("click", function () {
-                downloadQrAsPng(qr);
-            });
-            container.appendChild(downloadBtn);
-
-            container.style.display = "block";
+            renderQrInto(container, text);
             button.classList.add("active");
         } catch (e) {
             showToast("QR 码生成失败", "error");
@@ -204,6 +235,12 @@
         document.getElementById("ulResult").value = result.ulLink;
         document.getElementById("fallbackResult").value = result.fallbackLink;
         document.getElementById("trackResult").value = result.trackLink;
+
+        // 已展开的 QR 码同步刷新为新链接（未展开的保持懒渲染，等点 QR 按钮时再生成）
+        refreshQrIfVisible("dpQr", "dpResult");
+        refreshQrIfVisible("ulQr", "ulResult");
+        refreshQrIfVisible("fallbackQr", "fallbackResult");
+
         document.getElementById("resultCard").style.display = "block";
         document.getElementById("resultCard").scrollIntoView({ behavior: "smooth" });
     }
