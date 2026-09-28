@@ -130,7 +130,19 @@ function renderTable() {
   var isIn = currentTab === 'insufficient';
   var isOut = currentTab === 'sufficient';
   var isIdle = currentTab === 'idle';
-  document.getElementById('tableStats').textContent = '显示 ' + filtered.length + ' / ' + allAccounts.length + ' 个账户';
+
+  // ⚠️「闲置余额」是「可转出」的子集（闲置账户的钱全额计入可转出）
+  // ⇒ 在同一行计数旁把两者关系写清楚，避免看起来像重复统计
+  var statsTxt = '显示 ' + filtered.length + ' / ' + allAccounts.length + ' 个账户';
+  var sufAll = transferData ? transferData.sufficient : [];
+  if (isIdle) {
+    var idleAllN = allAccounts.filter(function(x) { return x.edgeCase === 'idle'; }).length;
+    statsTxt += '　｜　💤闲置 = 无消耗账户的余额，属于「可转出」的子集（' + idleAllN + ' / ' + sufAll.length + ' 户）';
+  } else if (isOut) {
+    var idleInSufN = sufAll.filter(function(x) { return x.edgeCase === 'idle'; }).length;
+    statsTxt += '　｜　= 💤闲置 ' + idleInSufN + ' 户 ＋ 在投账户盈余 ' + (sufAll.length - idleInSufN) + ' 户';
+  }
+  document.getElementById('tableStats').textContent = statsTxt;
 
   var headHTML, bodyHTML = '';
   var i, a, days, daysStr, rowClass, statusHtml, amt, absAmt;

@@ -27,9 +27,9 @@
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">📋 全部账户<span class="tab-count" id="countAll"></span></button>
-    <button class="tab-btn" data-tab="insufficient" onclick="switchTab('insufficient')">📥 需转入<span class="tab-count" id="countIn"></span></button>
-    <button class="tab-btn" data-tab="sufficient" onclick="switchTab('sufficient')">📤 可转出<span class="tab-count" id="countOut"></span></button>
-    <button class="tab-btn" data-tab="idle" onclick="switchTab('idle')">💤 闲置余额<span class="tab-count" id="countIdle"></span></button>
+    <button class="tab-btn" data-tab="insufficient" onclick="switchTab('insufficient')" title="普通返货不足目标水位的账户（只按普通返货缺口算；赔付返货不可抵扣消耗，不参与）">📥 需转入<span class="tab-count" id="countIn"></span></button>
+    <button class="tab-btn" data-tab="sufficient" onclick="switchTab('sufficient')" title="全部可转出账户 = 无消耗的闲置余额 + 在投账户的返货盈余；赔付返货余额全额计入本侧">📤 可转出<span class="tab-count" id="countOut"></span></button>
+    <button class="tab-btn" data-tab="idle" onclick="switchTab('idle')" title="无消耗账户里的余额（普通 + 赔付），属于「可转出」的子集，同时也是可转出全集里优先级最高的一批">💤 闲置余额<span class="tab-count" id="countIdle"></span></button>
   </div>
 
   <div class="toolbar">
