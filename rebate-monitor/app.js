@@ -35,22 +35,32 @@ function init(data) {
 }
 
 // ===== SUMMARY =====
+// 金额缩写：≥1万 → ¥26.5万，否则带千分位
+function fmtMoney(v) {
+  v = v || 0;
+  if (Math.abs(v) >= 10000) return '¥' + (v / 10000).toFixed(1) + '万';
+  return '¥' + v.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+}
+
 function renderSummary(s) {
   document.getElementById('summaryRow').innerHTML =
     '<div class="summary-card"><div class="icon" style="background:#eef1ff">📋</div><div><div class="value">' + s.totalAccounts + '</div><div class="label">在投账户总数</div></div></div>' +
-    '<div class="summary-card"><div class="icon" style="background:var(--red-bg)">⚠️</div><div><div class="value" style="color:var(--red)">' + s.alertAccounts + '</div><div class="label">不足' + targetDays + '天</div></div></div>' +
-    '<div class="summary-card"><div class="icon" style="background:var(--green-bg)">✅</div><div><div class="value" style="color:var(--green)">' + s.safeAccounts + '</div><div class="label">余额充足</div></div></div>' +
-    '<div class="summary-card"><div class="icon" style="background:var(--orange-bg)">🪫</div><div><div class="value" style="color:var(--orange)">' + s.zeroBalanceAccounts + '</div><div class="label">返货余额为0</div></div></div>' +
-    '<div class="summary-card"><div class="icon" style="background:var(--blue-bg)">💤</div><div><div class="value" style="color:var(--blue)">' + (s.idleAccounts || 0) + '</div><div class="label">闲置余额(无消耗)</div></div></div>';
+    '<div class="summary-card"><div class="icon" style="background:var(--red-bg)">⚠️</div><div><div class="value" style="color:var(--red)">' + s.alertAccounts + '</div><div class="label">普通返货不足' + targetDays + '天</div></div></div>' +
+    '<div class="summary-card"><div class="icon" style="background:var(--green-bg)">✅</div><div><div class="value" style="color:var(--green)">' + s.safeAccounts + '</div><div class="label">普通返货充足</div></div></div>' +
+    '<div class="summary-card"><div class="icon" style="background:var(--orange-bg)">🪫</div><div><div class="value" style="color:var(--orange)">' + s.zeroBalanceAccounts + '</div><div class="label">普通返货余额为0</div></div></div>' +
+    '<div class="summary-card"><div class="icon" style="background:var(--blue-bg)">💤</div><div><div class="value" style="color:var(--blue)">' + (s.idleAccounts || 0) + '</div><div class="label">闲置余额(无消耗)</div></div></div>' +
+    '<div class="summary-card" title="赔付返货不可抵扣消耗，只能转账/提现 ⇒ 全额计入「可转出」侧"><div class="icon" style="background:#f3e8ff">💸</div><div><div class="value" style="color:#8e44ad;font-size:22px">' + fmtMoney(s.totalPayoutBalance || 0) + '</div><div class="label">赔付返货余额（' + (s.payoutBalanceAccounts || 0) + ' 户）</div></div></div>';
 }
 
 function renderTransferSummary() {
   if (!transferData) return;
   var t = transferData;
+  var nOut = t.totalNormalOut || 0, pOut = t.totalPayoutOut || 0;
+  var money = function(v) { return '¥' + v.toLocaleString('zh-CN',{minimumFractionDigits:2}); };
   document.getElementById('transferSummary').innerHTML =
-    '<div class="transfer-card card-in"><div class="title">📥 需转入总额（' + t.insufficient.length + ' 个账户）</div><div class="amount" style="color:var(--red)">¥' + t.totalNeedIn.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</div><div class="sub">日均返货消耗 × ' + targetDays + '天 - 当前余额</div></div>' +
-    '<div class="transfer-card card-out"><div class="title">📤 可转出总额（' + t.sufficient.length + ' 个账户）</div><div class="amount" style="color:var(--green)">¥' + t.totalCanOut.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</div><div class="sub">当前余额 - 日均返货消耗 × ' + targetDays + '天</div></div>' +
-    '<div class="transfer-card card-net"><div class="title">' + (t.gap > 0 ? '⚠️ 资金缺口' : '✅ 净盈余') + '</div><div class="amount" style="color:' + (t.gap > 0 ? 'var(--red)' : 'var(--green)') + '">¥' + (t.gap > 0 ? t.gap : t.surplus).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</div><div class="sub">' + (t.gap > 0 ? '转出不足以覆盖，需额外充值' : '可转出完全覆盖转入需求') + '</div></div>';
+    '<div class="transfer-card card-in"><div class="title">📥 需转入总额（' + t.insufficient.length + ' 个账户）</div><div class="amount" style="color:var(--red)">' + money(t.totalNeedIn) + '</div><div class="sub">日均普通返货消耗 × ' + targetDays + '天 - 普通返货余额<br>（赔付返货不可抵扣消耗，不参与缺口）</div></div>' +
+    '<div class="transfer-card card-out"><div class="title">📤 可转出总额（' + t.sufficient.length + ' 个账户）</div><div class="amount" style="color:var(--green)">' + money(t.totalCanOut) + '</div><div class="sub">普通返货盈余 ' + money(nOut) + ' ＋ 赔付返货余额 ' + money(pOut) + '</div></div>' +
+    '<div class="transfer-card card-net"><div class="title">' + (t.gap > 0 ? '⚠️ 资金缺口' : '✅ 净盈余') + '</div><div class="amount" style="color:' + (t.gap > 0 ? 'var(--red)' : 'var(--green)') + '">' + money(t.gap > 0 ? t.gap : t.surplus) + '</div><div class="sub">仅按普通返货口径：盈余 ' + money(nOut) + ' - 需转入 ' + money(t.totalNeedIn) + '<br>' + (t.gap > 0 ? '普通返货转出不足覆盖，需额外充值' : '普通返货盈余完全覆盖转入需求') + '</div></div>';
 }
 
 // ===== TABLE =====
@@ -117,52 +127,88 @@ function esc(str) {
 
 function renderTable() {
   var filtered = getFiltered();
-  var isTransfer = currentTab === 'insufficient' || currentTab === 'sufficient';
+  var isIn = currentTab === 'insufficient';
+  var isOut = currentTab === 'sufficient';
   var isIdle = currentTab === 'idle';
   document.getElementById('tableStats').textContent = '显示 ' + filtered.length + ' / ' + allAccounts.length + ' 个账户';
 
   var headHTML, bodyHTML = '';
-  var i, a, days, daysStr, rowClass, statusHtml, amt, isIn, absAmt;
+  var i, a, days, daysStr, rowClass, statusHtml, amt, absAmt;
+  var num = function(v) { return '¥' + (v || 0).toLocaleString('zh-CN', {minimumFractionDigits:2}); };
+  var numDim = function(v) { return (v > 0) ? num(v) : '<span style="color:#c0c4cc">—</span>'; };
 
   if (isIdle) {
     headHTML = '<tr>' +
       '<th data-sort="name" onclick="sortTable(\'name\')">账户名称 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="agent" onclick="sortTable(\'agent\')">代理商 <span class="sort-icon">⇅</span></th>' +
-      '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">返货余额 <span class="sort-icon">⇅</span></th>' +
-      '<th style="text-align:right">建议转出金额</th>' +
+      '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">普通返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="payoutBalance" onclick="sortTable(\'payoutBalance\')" style="text-align:right">赔付返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="totalBalance" onclick="sortTable(\'totalBalance\')" style="text-align:right">建议转出合计 <span class="sort-icon">⇅</span></th>' +
       '</tr>';
     for (i = 0; i < filtered.length; i++) {
       a = filtered[i];
+      var idleTotal = (a.rebateBalance || 0) + (a.payoutBalance || 0);
       bodyHTML += '<tr class="row-alert">' +
         '<td><div class="name-cell" title="' + esc(a.name) + '">' + esc(a.name) + '</div></td>' +
         '<td>' + esc(a.agent || '') + '</td>' +
-        '<td class="num-cell" style="font-weight:600">¥' + (a.rebateBalance || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
-        '<td class="num-cell neg">-¥' + (a.rebateBalance || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
+        '<td class="num-cell" style="font-weight:600">' + num(a.rebateBalance) + '</td>' +
+        '<td class="num-cell" style="font-weight:600;color:#8e44ad">' + numDim(a.payoutBalance) + '</td>' +
+        '<td class="num-cell neg">-¥' + idleTotal.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
         '</tr>';
     }
-  } else if (isTransfer) {
+  } else if (isIn) {
+    // 需转入：只按普通返货缺口算（赔付返货不可抵扣消耗，不参与转入）
     headHTML = '<tr>' +
       '<th data-sort="name" onclick="sortTable(\'name\')">账户名称 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="agent" onclick="sortTable(\'agent\')">代理商 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="dailyRebateSpend" onclick="sortTable(\'dailyRebateSpend\')" style="text-align:right">日均返货消耗 <span class="sort-icon">⇅</span></th>' +
-      '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">当前返货余额 <span class="sort-icon">⇅</span></th>' +
-      '<th data-sort="transferAmount" onclick="sortTable(\'transferAmount\')" style="text-align:right">' + (currentTab === 'insufficient' ? '建议转入金额' : '建议转出金额') + ' <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">普通返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="payoutBalance" onclick="sortTable(\'payoutBalance\')" style="text-align:right">赔付返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="transferAmount" onclick="sortTable(\'transferAmount\')" style="text-align:right">建议转入金额 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="daysSupported" onclick="sortTable(\'daysSupported\')" style="text-align:right">调拨后可支撑 <span class="sort-icon">⇅</span></th>' +
       '</tr>';
 
     for (i = 0; i < filtered.length; i++) {
       a = filtered[i];
-      amt = a.transferAmount || 0;
-      isIn = currentTab === 'insufficient';
-      absAmt = Math.abs(amt);
-      rowClass = isIn ? 'row-alert' : (a.edgeCase === 'idle' ? 'row-alert' : '');
-      bodyHTML += '<tr class="' + rowClass + '">' +
-        '<td><div class="name-cell" title="' + esc(a.name) + '">' + esc(a.name) + (a.edgeCase === 'idle' ? ' <span class="badge badge-info" style="font-size:9px">💤闲置</span>' : '') + '</div></td>' +
+      absAmt = Math.abs(a.transferAmount || 0);
+      bodyHTML += '<tr class="row-alert">' +
+        '<td><div class="name-cell" title="' + esc(a.name) + '">' + esc(a.name) + ((a.payoutBalance || 0) > 0 ? ' <span class="badge badge-info" style="font-size:9px">💸赔付可转出</span>' : '') + '</div></td>' +
         '<td>' + esc(a.agent || '') + '</td>' +
         '<td class="num-cell">¥' + ((a.calcRebateSpend || a.dailyRebateSpend) || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + (a.edgeCase === 'estimated' ? ' <span style="font-size:10px;color:var(--orange)">(估算)</span>' : '') + '</td>' +
-        '<td class="num-cell">¥' + (a.rebateBalance || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
-        '<td class="num-cell ' + (isIn ? 'pos' : 'neg') + '">' + (isIn ? '+' : '-') + '¥' + absAmt.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
+        '<td class="num-cell">' + num(a.rebateBalance) + '</td>' +
+        '<td class="num-cell" style="color:#8e44ad">' + numDim(a.payoutBalance) + '</td>' +
+        '<td class="num-cell pos">+¥' + absAmt.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
         '<td class="num-cell" style="color:var(--green);font-weight:600">' + targetDays + '.0 天</td>' +
+        '</tr>';
+    }
+  } else if (isOut) {
+    // 可转出：普通返货盈余 + 赔付返货余额（全额），拆分展示
+    headHTML = '<tr>' +
+      '<th data-sort="name" onclick="sortTable(\'name\')">账户名称 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="agent" onclick="sortTable(\'agent\')">代理商 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="dailyRebateSpend" onclick="sortTable(\'dailyRebateSpend\')" style="text-align:right">日均返货消耗 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">普通返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="payoutBalance" onclick="sortTable(\'payoutBalance\')" style="text-align:right">赔付返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="normalOut" onclick="sortTable(\'normalOut\')" style="text-align:right">普通返货可转出 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="payoutOut" onclick="sortTable(\'payoutOut\')" style="text-align:right">赔付可转出 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="transferAmount" onclick="sortTable(\'transferAmount\')" style="text-align:right">转出合计 <span class="sort-icon">⇅</span></th>' +
+      '</tr>';
+
+    for (i = 0; i < filtered.length; i++) {
+      a = filtered[i];
+      amt = Math.abs(a.transferAmount || 0);
+      rowClass = (a.edgeCase === 'idle' && (a.rebateBalance || 0) > 0) ? 'row-alert' : '';
+      bodyHTML += '<tr class="' + rowClass + '">' +
+        '<td><div class="name-cell" title="' + esc(a.name) + '">' + esc(a.name) +
+          (a.edgeCase === 'idle' ? ' <span class="badge badge-info" style="font-size:9px">💤闲置</span>' : '') +
+          (a.edgeCase === 'estimated' ? ' <span class="badge badge-warning" style="font-size:9px">🔶估算</span>' : '') + '</div></td>' +
+        '<td>' + esc(a.agent || '') + '</td>' +
+        '<td class="num-cell">¥' + ((a.calcRebateSpend || a.dailyRebateSpend) || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
+        '<td class="num-cell">' + num(a.rebateBalance) + '</td>' +
+        '<td class="num-cell" style="color:#8e44ad;font-weight:600">' + numDim(a.payoutBalance) + '</td>' +
+        '<td class="num-cell">' + numDim(a.normalOut) + '</td>' +
+        '<td class="num-cell" style="color:#8e44ad">' + numDim(a.payoutOut) + '</td>' +
+        '<td class="num-cell neg">-¥' + amt.toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
         '</tr>';
     }
   } else {
@@ -172,6 +218,7 @@ function renderTable() {
       '<th data-sort="dailyAvgSpend" onclick="sortTable(\'dailyAvgSpend\')" style="text-align:right">日均消耗 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="dailyRebateSpend" onclick="sortTable(\'dailyRebateSpend\')" style="text-align:right">日均返货消耗 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="rebateBalance" onclick="sortTable(\'rebateBalance\')" style="text-align:right">普通返货余额 <span class="sort-icon">⇅</span></th>' +
+      '<th data-sort="payoutBalance" onclick="sortTable(\'payoutBalance\')" style="text-align:right">赔付返货余额 <span class="sort-icon">⇅</span></th>' +
       '<th data-sort="daysSupported" onclick="sortTable(\'daysSupported\')" style="text-align:right">可支撑天数 <span class="sort-icon">⇅</span></th>' +
       '<th style="text-align:center">状态</th>' +
       '</tr>';
@@ -205,9 +252,10 @@ function renderTable() {
       bodyHTML += '<tr class="' + rowClass + '">' +
         '<td><div class="name-cell" title="' + esc(a.name) + '">' + esc(a.name) + '</div></td>' +
         '<td>' + esc(a.agent || '') + '</td>' +
-        '<td class="num-cell">¥' + (a.dailyAvgSpend || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
-        '<td class="num-cell">¥' + (a.dailyRebateSpend || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
-        '<td class="num-cell">¥' + (a.rebateBalance || 0).toLocaleString('zh-CN',{minimumFractionDigits:2}) + '</td>' +
+        '<td class="num-cell">' + num(a.dailyAvgSpend) + '</td>' +
+        '<td class="num-cell">' + num(a.dailyRebateSpend) + '</td>' +
+        '<td class="num-cell">' + num(a.rebateBalance) + '</td>' +
+        '<td class="num-cell" style="color:#8e44ad">' + numDim(a.payoutBalance) + '</td>' +
         '<td class="num-cell" style="font-weight:600;color:' + (days < targetDays ? 'var(--red)' : days < targetDays * 1.5 ? 'var(--orange)' : 'var(--green)') + '">' + daysStr + ' 天</td>' +
         '<td style="text-align:center">' + statusHtml + '</td>' +
         '</tr>';
@@ -375,51 +423,83 @@ function isAlertAccount(a, T) {
   return (a.rebateBalance || 0) / rb < T;
 }
 
+// 与 Python 内置 round(x, 2) 对齐（银行家舍入：恰好 .5 时取偶），
+// 保证「上传 Excel 现场计算」与「update_data.py 生成 account_data.json」两套结果逐分一致
+function r2(v) {
+  var x = (v || 0) * 100;
+  var fl = Math.floor(x);
+  var d = x - fl;
+  if (Math.abs(d - 0.5) < 1e-9) return (fl % 2 === 0 ? fl : fl + 1) / 100;
+  return Math.round(x) / 100;
+}
+
 function computeTransfer(accounts, T) {
   var insuf = [], suf = [];
   accounts.forEach(function(a) {
     var edge = a.edgeCase;
-    var balance = a.rebateBalance;
+    var balance = a.rebateBalance || 0;
+    var pbal = a.payoutBalance || 0;   // 赔付返货余额：不可抵扣消耗 ⇒ 全额计入可转出
 
-    // 闲置账户：全额转出，优先
+    // 闲置账户：普通 + 赔付全额转出，优先
     if (edge === 'idle') {
-      if (balance > 0) suf.push({ name: a.name, id: a.id, agent: a.agent, dailyRebateSpend: 0, rebateBalance: balance, targetBalance: 0, transferAmount: -balance, daysSupported: a.daysSupported, edgeCase: 'idle' });
+      if (balance + pbal > 0) suf.push({
+        name: a.name, id: a.id, agent: a.agent, dailyRebateSpend: 0, rebateBalance: r2(balance),
+        payoutBalance: r2(pbal), targetBalance: 0,
+        normalOut: r2(balance), payoutOut: r2(pbal), transferAmount: -r2(balance + pbal),
+        daysSupported: a.daysSupported, edgeCase: 'idle', calcRebateSpend: 0
+      });
       return;
     }
 
     // estimated：JSON 数据 dailyRebateSpend 即估算值；前端拖文件数据用 estimatedRebateSpend
     var calcRb = edge === 'estimated' ? (a.estimatedRebateSpend || a.dailyRebateSpend || 0) : (a.dailyRebateSpend || 0);
-    if (calcRb <= 0 || (edge === null && a.daysSupported >= 999999)) return;
+    if (calcRb <= 0 && pbal <= 0) return;
 
-    var target = calcRb * T;
-    var diff = Math.round((target - balance) * 100) / 100;
-    var entry = { name: a.name, id: a.id, agent: a.agent, dailyRebateSpend: a.dailyRebateSpend, rebateBalance: balance, targetBalance: Math.round(target*100)/100, transferAmount: diff, daysSupported: a.daysSupported, edgeCase: edge, calcRebateSpend: Math.round(calcRb*100)/100 };
-    if (diff > 0) insuf.push(entry);
-    else if (diff < 0) suf.push(entry);
+    // 目标水位只针对普通返货；赔付返货不设水位（全额可转出）
+    // target 用未舍入值参与差额计算 ⇒ 与 update_data.py 口径逐分一致
+    var targetRaw = calcRb * T;
+    var target = r2(targetRaw);
+    var needIn = r2(targetRaw - balance);
+    var normalOut = r2(Math.max(balance - targetRaw, 0));
+    var payoutOut = r2(pbal);
+    var base = { name: a.name, id: a.id, agent: a.agent, dailyRebateSpend: a.dailyRebateSpend,
+                 rebateBalance: r2(balance), payoutBalance: r2(pbal), targetBalance: target,
+                 daysSupported: a.daysSupported, edgeCase: edge, calcRebateSpend: r2(calcRb) };
+
+    // 同一账户可同时进两侧：普通返货缺口走转入，赔付余额走转出（两笔钱性质不同）
+    if (needIn > 0) insuf.push(Object.assign({}, base, { normalOut: 0, payoutOut: payoutOut, transferAmount: needIn }));
+    if (normalOut + payoutOut > 0) suf.push(Object.assign({}, base, { normalOut: normalOut, payoutOut: payoutOut, transferAmount: -r2(normalOut + payoutOut) }));
   });
   insuf.sort(function(a, b) { return b.transferAmount - a.transferAmount; });
-  var idleSuf = suf.filter(function(a) { return a.edgeCase === 'idle'; }).sort(function(a, b) { return b.rebateBalance - a.rebateBalance; });
-  var normalSuf = suf.filter(function(a) { return a.edgeCase !== 'idle'; }).sort(function(a, b) { return a.transferAmount - b.transferAmount; });
+  var idleSuf = suf.filter(function(a) { return a.edgeCase === 'idle'; }).sort(function(a, b) { return (b.rebateBalance + b.payoutBalance) - (a.rebateBalance + a.payoutBalance); });
+  var normalSuf = suf.filter(function(a) { return a.edgeCase !== 'idle'; }).sort(function(a, b) { return (b.normalOut + b.payoutOut) - (a.normalOut + a.payoutOut); });
   suf = idleSuf.concat(normalSuf);
 
-  var totalNeed = insuf.reduce(function(s, a) { return s + a.transferAmount; }, 0);
-  var totalCan = Math.abs(suf.reduce(function(s, a) { return s + a.transferAmount; }, 0));
+  var totalNeed = 0, totalNormalOut = 0, totalPayoutOut = 0;
+  insuf.forEach(function(a) { totalNeed += a.transferAmount; });
+  suf.forEach(function(a) { totalNormalOut += a.normalOut; totalPayoutOut += a.payoutOut; });
+  var totalCan = totalNormalOut + totalPayoutOut;
 
   return {
     targetDays: T, insufficient: insuf, sufficient: suf,
-    totalNeedIn: Math.round(totalNeed*100)/100,
-    totalCanOut: Math.round(totalCan*100)/100,
-    gap: Math.round(Math.max(totalNeed - totalCan, 0)*100)/100,
-    surplus: Math.round(Math.max(totalCan - totalNeed, 0)*100)/100
+    totalNeedIn: r2(totalNeed),
+    totalNormalOut: r2(totalNormalOut),
+    totalPayoutOut: r2(totalPayoutOut),
+    totalCanOut: r2(totalCan),
+    // 净额只看普通返货盈余 —— 赔付返货不可抵扣消耗，不能覆盖缺口
+    gap: r2(Math.max(totalNeed - totalNormalOut, 0)),
+    surplus: r2(Math.max(totalNormalOut - totalNeed, 0))
   };
 }
 
 function computeSummary(accounts, T) {
-  var alertCnt = 0, zero = 0, idleCnt = 0;
+  var alertCnt = 0, zero = 0, idleCnt = 0, payoutCnt = 0, payoutTotal = 0;
   accounts.forEach(function(a) {
     if (isAlertAccount(a, T)) alertCnt++;
     if (a.rebateBalance === 0) zero++;
     if (a.edgeCase === 'idle') idleCnt++;
+    var pb = a.payoutBalance || 0;
+    if (pb > 0) { payoutCnt++; payoutTotal += pb; }
   });
   return {
     totalAccounts: accounts.length,
@@ -427,6 +507,8 @@ function computeSummary(accounts, T) {
     safeAccounts: accounts.length - alertCnt,
     zeroBalanceAccounts: zero,
     idleAccounts: idleCnt,
+    payoutBalanceAccounts: payoutCnt,
+    totalPayoutBalance: r2(payoutTotal),
     reportDate: lastReportDate,
     dateRange: lastDateRange
   };
@@ -465,10 +547,40 @@ function updateTargetDays() {
 }
 
 // ===== LOAD NEW FILE =====
+// Excel 解析库（xlsx.full.min.js）与页面同目录，首次使用时按需加载 ⇒ 不阻塞首屏，
+// 也不依赖外网 CDN（内网 / 代理环境常不可达）
+var _xlsxLoading = null;
+function ensureXLSX() {
+  if (typeof XLSX !== 'undefined') return Promise.resolve();
+  if (_xlsxLoading) return _xlsxLoading;
+  _xlsxLoading = new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'xlsx.full.min.js';
+    s.onload = function() {
+      if (typeof XLSX !== 'undefined') { resolve(); }
+      else { _xlsxLoading = null; reject(new Error('XLSX 未挂载')); }
+    };
+    s.onerror = function() { _xlsxLoading = null; reject(new Error('xlsx.full.min.js 加载失败')); };
+    document.head.appendChild(s);
+  });
+  return _xlsxLoading;
+}
+
 function loadNewFile(event) {
   var file = event.target.files[0];
   if (!file) return;
+  var input = event.target;
+  showToast('⏳ 正在解析报表…');
+  ensureXLSX().then(function() {
+    parseReportFile(file, input);
+  }).catch(function(err) {
+    input.value = '';
+    showToast('❌ Excel 解析库加载失败：' + err.message);
+    console.error(err);
+  });
+}
 
+function parseReportFile(file, input) {
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -489,35 +601,45 @@ function loadNewFile(event) {
             name: row['账户名称'] || '', id: accId,
             type: row['账户类型'] || '', entity: row['主体名称'] || '',
             agent: row['所属代理商'] || '',
-            dates: new Set(), totalSpend: 0, totalRebateSpend: 0,
-            latestRebateBalance: 0, latestDate: '', latestRow: null
+            dates: new Set(), spendDates: new Set(), totalSpend: 0, totalRebateSpend: 0, totalPayoutSpend: 0,
+            latestRebateBalance: 0, latestPayoutBalance: 0, latestDate: '', latestRow: null
           });
         }
         var acc = accountMap.get(key);
-        acc.dates.add(dateStr); acc.totalSpend += spend;
-        acc.totalRebateSpend += parseFloat(row['账户消耗-普通返货']) || 0;
+        acc.dates.add(dateStr);
+        acc.totalSpend += spend;
+        // 返货消耗只在「有消耗的天」累加 ⇒ 与 update_data.py 口径一致（分子分母同源）
+        if (spend > 0) {
+          acc.spendDates.add(dateStr);
+          acc.totalRebateSpend += parseFloat(row['账户消耗-普通返货']) || 0;
+          acc.totalPayoutSpend += parseFloat(row['账户消耗-赔付返货']) || 0;
+        }
         if (dateStr >= acc.latestDate) {
           acc.latestDate = dateStr;
           acc.latestRebateBalance = parseFloat(row['普通返货余额']) || 0;
+          acc.latestPayoutBalance = parseFloat(row['赔付返货余额']) || 0;
           acc.latestRow = row;
         }
       });
 
       var accounts = [];
       accountMap.forEach(function(acc) {
-        var numDays = acc.dates.size;
+        var numDays = acc.spendDates.size;
         var dailyAvg = numDays > 0 ? acc.totalSpend / numDays : 0;
         var dailyRebate = numDays > 0 ? acc.totalRebateSpend / numDays : 0;
         var edgeCase = null;
 
-        // 无消耗但有返货余额 → 闲置
+        // 无消耗但（普通或赔付）有返货余额 → 闲置，全额可转出
         if (acc.totalSpend === 0) {
-          if (acc.latestRebateBalance > 0) {
+          if (acc.latestRebateBalance > 0 || acc.latestPayoutBalance > 0) {
             accounts.push({
               name: acc.name, id: acc.id, type: acc.type, entity: acc.entity, agent: acc.agent,
               statsDays: 0, totalSpend: 0, dailyAvgSpend: 0,
               dailyRebateSpend: 0, totalRebateSpend: 0, estimatedRebateSpend: 0,
-              rebateBalance: Math.round(acc.latestRebateBalance * 100) / 100,
+              totalPayoutSpend: 0, dailyPayoutSpend: 0,
+              rebateBalance: r2(acc.latestRebateBalance),
+              payoutBalance: r2(acc.latestPayoutBalance),
+              totalBalance: r2(acc.latestRebateBalance + acc.latestPayoutBalance),
               daysSupported: 999999, latestDate: acc.latestDate,
               alert: false, edgeCase: 'idle'
             });
@@ -525,28 +647,30 @@ function loadNewFile(event) {
           return;
         }
 
-        // 有消耗但返货消耗为0 → 估算（按10%）
+        // 有消耗但返货消耗为0 → 按日均总消耗×10% 估算；估算值直接写入 dailyRebateSpend，
+        // 与 update_data.py 口径一致（展示层用 calcRebateSpend 标注「估算」来源）
         var calcRebate = dailyRebate;
-        var displayRebate = dailyRebate;
         if (dailyRebate === 0 && acc.totalSpend > 0) {
           calcRebate = dailyAvg * 0.10;
-          displayRebate = 0;
           edgeCase = 'estimated';
         }
 
-        var effectiveRebate = edgeCase === 'estimated' ? calcRebate : dailyRebate;
-        var daysSupported = effectiveRebate > 0 ? acc.latestRebateBalance / effectiveRebate : 999999;
-        var daysDisplay = edgeCase === 'estimated' ? 999999 : daysSupported;
+        var daysSupported = calcRebate > 0 ? acc.latestRebateBalance / calcRebate : 999999;
+        var daysDisplay = daysSupported;
 
         accounts.push({
           name: acc.name, id: acc.id, type: acc.type, entity: acc.entity, agent: acc.agent,
           statsDays: numDays,
-          totalSpend: Math.round(acc.totalSpend * 100) / 100,
-          dailyAvgSpend: Math.round(dailyAvg * 100) / 100,
-          dailyRebateSpend: Math.round(displayRebate * 100) / 100,
-          totalRebateSpend: Math.round(acc.totalRebateSpend * 100) / 100,
-          estimatedRebateSpend: edgeCase === 'estimated' ? Math.round(calcRebate * 100) / 100 : 0,
-          rebateBalance: Math.round(acc.latestRebateBalance * 100) / 100,
+          totalSpend: r2(acc.totalSpend),
+          dailyAvgSpend: r2(dailyAvg),
+          dailyRebateSpend: r2(calcRebate),
+          totalRebateSpend: r2(acc.totalRebateSpend),
+          estimatedRebateSpend: edgeCase === 'estimated' ? r2(calcRebate) : 0,
+          totalPayoutSpend: r2(acc.totalPayoutSpend),
+          dailyPayoutSpend: numDays > 0 ? r2(acc.totalPayoutSpend / numDays) : 0,
+          rebateBalance: r2(acc.latestRebateBalance),
+          payoutBalance: r2(acc.latestPayoutBalance),
+          totalBalance: r2(acc.latestRebateBalance + acc.latestPayoutBalance),
           daysSupported: daysDisplay >= 999999 ? 999999 : Math.round(daysDisplay * 10) / 10,
           latestDate: acc.latestDate,
           alert: daysSupported < targetDays,
@@ -560,10 +684,13 @@ function loadNewFile(event) {
       lastDateRange = allDates.size + '天数据（手动导入）';
       transferData = computeTransfer(accounts, targetDays);
       renderDashboard();
-      showToast('✅ 成功加载 ' + accounts.length + ' 个账户数据');
+      var payN = accounts.filter(function(x) { return (x.payoutBalance || 0) > 0; }).length;
+      showToast('✅ 成功加载 ' + accounts.length + ' 个账户（含赔付返货余额 ' + payN + ' 户）');
     } catch(err) {
       showToast('❌ 文件解析失败：' + err.message);
       console.error(err);
+    } finally {
+      if (input) input.value = '';
     }
   };
   reader.readAsArrayBuffer(file);
@@ -572,24 +699,31 @@ function loadNewFile(event) {
 // ===== EXPORT =====
 function exportCSV() {
   var filtered = getFiltered();
-  var isTransfer = currentTab === 'insufficient' || currentTab === 'sufficient';
+  var isIn = currentTab === 'insufficient';
+  var isOut = currentTab === 'sufficient';
 
   var headers, rows;
   if (currentTab === 'idle') {
-    headers = ['账户名称', '账户ID', '代理商', '返货余额', '建议转出金额'];
+    headers = ['账户名称', '账户ID', '代理商', '普通返货余额', '赔付返货余额', '建议转出合计'];
     rows = filtered.map(function(a) {
-      return [a.name, a.id, a.agent || '', (a.rebateBalance || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2)];
+      var tot = (a.rebateBalance || 0) + (a.payoutBalance || 0);
+      return [a.name, a.id, a.agent || '', (a.rebateBalance || 0).toFixed(2), (a.payoutBalance || 0).toFixed(2), tot.toFixed(2)];
     });
-  } else if (isTransfer) {
-    headers = ['账户名称', '账户ID', '代理商', '日均返货消耗', '当前返货余额', currentTab === 'insufficient' ? '建议转入金额' : '建议转出金额', '调拨后可支撑天数'];
+  } else if (isIn) {
+    headers = ['账户名称', '账户ID', '代理商', '日均返货消耗', '普通返货余额', '赔付返货余额', '建议转入金额', '调拨后可支撑天数'];
     rows = filtered.map(function(a) {
-      return [a.name, a.id, a.agent || '', (a.dailyRebateSpend || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2), Math.abs(a.transferAmount || 0).toFixed(2), String(targetDays)];
+      return [a.name, a.id, a.agent || '', (a.dailyRebateSpend || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2), (a.payoutBalance || 0).toFixed(2), Math.abs(a.transferAmount || 0).toFixed(2), String(targetDays)];
+    });
+  } else if (isOut) {
+    headers = ['账户名称', '账户ID', '代理商', '日均返货消耗', '普通返货余额', '赔付返货余额', '普通返货可转出', '赔付可转出', '转出合计'];
+    rows = filtered.map(function(a) {
+      return [a.name, a.id, a.agent || '', (a.dailyRebateSpend || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2), (a.payoutBalance || 0).toFixed(2), (a.normalOut || 0).toFixed(2), (a.payoutOut || 0).toFixed(2), Math.abs(a.transferAmount || 0).toFixed(2)];
     });
   } else {
-    headers = ['账户名称', '账户ID', '代理商', '日均消耗', '日均返货消耗', '普通返货余额', '可支撑天数', '状态'];
+    headers = ['账户名称', '账户ID', '代理商', '日均消耗', '日均返货消耗', '普通返货余额', '赔付返货余额', '可支撑天数', '状态'];
     rows = filtered.map(function(a) {
       var status = a.daysSupported < 5 ? '严重不足' : a.daysSupported < targetDays ? '不足' : a.daysSupported >= 999999 ? (a.edgeCase === 'idle' ? '闲置余额' : a.edgeCase === 'estimated' ? '按10%估算' : '无消耗') : '充足';
-      return [a.name, a.id, a.agent || '', (a.dailyAvgSpend || 0).toFixed(2), (a.dailyRebateSpend || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2), a.daysSupported >= 999999 ? '∞' : (a.daysSupported || 0).toFixed(1), status];
+      return [a.name, a.id, a.agent || '', (a.dailyAvgSpend || 0).toFixed(2), (a.dailyRebateSpend || 0).toFixed(2), (a.rebateBalance || 0).toFixed(2), (a.payoutBalance || 0).toFixed(2), a.daysSupported >= 999999 ? '∞' : (a.daysSupported || 0).toFixed(1), status];
     });
   }
 

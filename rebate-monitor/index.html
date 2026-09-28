@@ -11,9 +11,12 @@
 <div class="header">
   <h1>📊 同程旅行 - 返货余额监控仪表盘</h1>
   <div class="subtitle">
-    返货消耗 = 「账户消耗-普通返货」日均（为0时展示0，转入计算按日均消耗×10%估算） &nbsp;|&nbsp; 安全阈值：可支撑 ≥ <span id="targetDaysLabel" style="font-weight:700;color:var(--primary)">10</span> 天
+    普通返货消耗 = 「账户消耗-普通返货」日均（为0时展示0，转入计算按日均消耗×10%估算） &nbsp;|&nbsp; 安全阈值：可支撑 ≥ <span id="targetDaysLabel" style="font-weight:700;color:var(--primary)">10</span> 天
     &nbsp;|&nbsp; 数据日期: <span id="reportDate">--</span>
     &nbsp;|&nbsp; 统计范围: <span id="dateRange">--</span>
+  </div>
+  <div class="subtitle" style="margin-top:4px;">
+    💸 赔付返货：不可抵扣消耗，只能转账/提现 ⇒ <b>余额全额计入「可转出」侧</b>，不参与「需转入」与缺口覆盖判断
   </div>
 </div>
 
@@ -63,14 +66,14 @@
   </div>
 
   <div class="footer">
-    返货余额监控工具 v2.1 &nbsp;|&nbsp; 返货余额可在账户间转入/转出，需人工操作 &nbsp;|&nbsp; 建议每 <span id="targetDaysFooter" style="font-weight:700">10</span> 天至少调拨一次
+    返货余额监控工具 v2.2 &nbsp;|&nbsp; 普通/赔付返货余额均可在账户间转入/转出，需人工操作 &nbsp;|&nbsp; 建议每 <span id="targetDaysFooter" style="font-weight:700">10</span> 天至少调拨一次
     &nbsp;|&nbsp; <span style="color:var(--red);font-weight:600;">⚠️ account_data.json 含敏感财务数据，请勿外传</span>
   </div>
 </div>
 
 
 <script src="chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<!-- Excel 解析库（xlsx.full.min.js）与页面同目录，由 app.js 在「加载新报表」时按需加载，不走外网 CDN -->
 <script src="app.js"></script>
 </body>
 </html>

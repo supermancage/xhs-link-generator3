@@ -26,7 +26,8 @@
   .header .subtitle { font-size: 13px; opacity: 0.85; }
   .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
 
-  .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  /* 6 张汇总卡（新增「赔付返货余额」）⇒ 3 列 × 2 行，避免最后一行只挂一张卡 */
+  .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
   .summary-card {
     background: var(--card-bg); border-radius: 12px; padding: 20px 24px;
     box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px;

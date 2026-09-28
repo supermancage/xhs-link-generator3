@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .workbuddy/
+.bak_*/
 account_data.json
 target_aids.txt
 api_balances.json
