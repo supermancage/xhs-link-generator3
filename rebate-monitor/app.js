@@ -547,21 +547,31 @@ function updateTargetDays() {
 }
 
 // ===== LOAD NEW FILE =====
-// Excel 解析库（xlsx.full.min.js）与页面同目录，首次使用时按需加载 ⇒ 不阻塞首屏，
-// 也不依赖外网 CDN（内网 / 代理环境常不可达）
+// Excel 解析库按需加载（不阻塞首屏、不依赖外网 CDN）。
+// 两套部署环境共用同一份代码，按顺序回退：
+//   ① GitHub Pages：同目录 xlsx.full.min.js
+//   ② 内网机 /tools/rebate-monitor/：复用 /tools/_vendor/xlsx-0.18.5.full.min.js
 var _xlsxLoading = null;
+var XLSX_PATHS = ['xlsx.full.min.js', '../_vendor/xlsx-0.18.5.full.min.js'];
+
 function ensureXLSX() {
   if (typeof XLSX !== 'undefined') return Promise.resolve();
   if (_xlsxLoading) return _xlsxLoading;
   _xlsxLoading = new Promise(function(resolve, reject) {
-    var s = document.createElement('script');
-    s.src = 'xlsx.full.min.js';
-    s.onload = function() {
-      if (typeof XLSX !== 'undefined') { resolve(); }
-      else { _xlsxLoading = null; reject(new Error('XLSX 未挂载')); }
-    };
-    s.onerror = function() { _xlsxLoading = null; reject(new Error('xlsx.full.min.js 加载失败')); };
-    document.head.appendChild(s);
+    var idx = 0;
+    function tryNext() {
+      if (idx >= XLSX_PATHS.length) {
+        _xlsxLoading = null;
+        reject(new Error('已试过 ' + XLSX_PATHS.join(' / ') + '，均加载失败'));
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = XLSX_PATHS[idx++];
+      s.onload = function() { if (typeof XLSX !== 'undefined') { resolve(); } else { tryNext(); } };
+      s.onerror = function() { tryNext(); };
+      document.head.appendChild(s);
+    }
+    tryNext();
   });
   return _xlsxLoading;
 }

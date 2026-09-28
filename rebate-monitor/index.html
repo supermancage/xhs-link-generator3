@@ -73,7 +73,7 @@
 
 
 <script src="chart.min.js"></script>
-<!-- Excel 解析库（xlsx.full.min.js）与页面同目录，由 app.js 在「加载新报表」时按需加载，不走外网 CDN -->
+<!-- Excel 解析库由 app.js 在「加载新报表」时按需加载：同目录 xlsx.full.min.js → ../_vendor/ 回退，不走外网 CDN -->
 <script src="app.js"></script>
 </body>
 </html>
